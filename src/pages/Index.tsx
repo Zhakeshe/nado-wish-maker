@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowRight, Trophy, Map, BookOpen, Users, Star, Upload } from "lucide-react";
 import { Link } from "react-router-dom";
-import heroImage from "@/assets/hero-architecture.jpg";
+import heroYurt from "@/assets/hero-yurt.png";
 
 const Index = () => {
   return (
@@ -12,44 +12,36 @@ const Index = () => {
       <Navigation />
       
       <main className="flex-1">
-        {/* Hero Section - Architecture of Kazakhstan */}
+        {/* Hero Section - Yurt with Neon Style */}
         <section className="relative pt-32 pb-20 px-4 overflow-hidden min-h-[90vh] flex items-center">
           <div 
             className="absolute inset-0 bg-cover bg-center -z-10"
-            style={{ backgroundImage: `url(${heroImage})` }}
+            style={{ backgroundImage: `url(${heroYurt})` }}
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/40 to-background -z-10" />
+          <div className="absolute inset-0 bg-black/60 -z-10" />
+          <div className="absolute top-0 left-0 w-96 h-96 gradient-hero blur-3xl opacity-30 -z-10" />
+          <div className="absolute bottom-0 right-0 w-96 h-96 gradient-neon blur-3xl opacity-30 -z-10" />
           
           <div className="container mx-auto text-center relative z-10">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-background/80 backdrop-blur-sm rounded-full mb-6 border border-primary/20">
-              <Star className="w-4 h-4 text-primary fill-primary" />
-              <span className="text-sm font-medium">Интерактивный онлайн-музей архитектуры</span>
-            </div>
-            
-            <h1 className="font-serif text-5xl md:text-7xl font-bold mb-6 bg-gradient-hero bg-clip-text text-transparent drop-shadow-lg">
-              TENGIR
+            <h1 className="font-sans text-5xl md:text-7xl font-black mb-6 neon-text-pink animate-fade-in-up">
+              TENGIR — Қазақстанды 3D-ойнат!
             </h1>
             
-            <p className="text-xl md:text-2xl text-foreground mb-4 max-w-3xl mx-auto font-semibold drop-shadow">
-              Измените своё восприятие музея
+            <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-3xl mx-auto font-medium animate-fade-in-up animate-delay-200">
+              Узнай историю Казахстана через интерактивные 3D-объекты и получай пойнты.
             </p>
             
-            <p className="text-lg md:text-xl text-foreground/90 mb-8 max-w-3xl mx-auto drop-shadow">
-              Изучайте 3D-модели архитектурных памятников Казахстана, участвуйте в обучающих играх 
-              и получайте поинты за свои знания
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button asChild size="lg" className="gap-2 shadow-gold">
-                <Link to="/projects">
-                  <BookOpen className="w-5 h-5" />
-                  Начать путешествие
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="gap-2 bg-background/80 backdrop-blur-sm">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up animate-delay-400">
+              <Button asChild size="lg" className="gap-2 text-lg px-8">
                 <Link to="/game">
                   <Trophy className="w-5 h-5" />
-                  Играть и учиться
+                  Начать игру
+                </Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="gap-2 text-lg px-8">
+                <Link to="/auth">
+                  <Star className="w-5 h-5" />
+                  Зарегистрироваться
                 </Link>
               </Button>
             </div>
@@ -57,10 +49,10 @@ const Index = () => {
         </section>
 
         {/* Mission Section */}
-        <section className="py-20 bg-muted/50">
+        <section className="py-20 bg-gradient-subtle">
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
-              <h2 className="font-serif text-3xl md:text-5xl font-bold mb-4">
+              <h2 className="font-sans text-3xl md:text-5xl font-bold mb-4 neon-text-yellow">
                 Наша миссия
               </h2>
               <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
@@ -70,9 +62,9 @@ const Index = () => {
             </div>
 
             <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-              <Card className="p-8 gradient-card hover:shadow-elegant transition-smooth text-center">
-                <div className="w-16 h-16 bg-gradient-hero rounded-full flex items-center justify-center mx-auto mb-4 shadow-gold">
-                  <BookOpen className="w-8 h-8 text-primary-foreground" />
+              <Card className="p-8 gradient-card hover:shadow-soft transition-smooth text-center border-border/50">
+                <div className="w-16 h-16 gradient-neon rounded-full flex items-center justify-center mx-auto mb-4 shadow-neon-pink">
+                  <BookOpen className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="font-bold text-xl mb-3">Образование</h3>
                 <p className="text-muted-foreground">
@@ -80,9 +72,9 @@ const Index = () => {
                 </p>
               </Card>
 
-              <Card className="p-8 gradient-card hover:shadow-elegant transition-smooth text-center">
-                <div className="w-16 h-16 bg-gradient-hero rounded-full flex items-center justify-center mx-auto mb-4 shadow-gold">
-                  <Users className="w-8 h-8 text-primary-foreground" />
+              <Card className="p-8 gradient-card hover:shadow-soft transition-smooth text-center border-border/50">
+                <div className="w-16 h-16 gradient-neon rounded-full flex items-center justify-center mx-auto mb-4 shadow-neon-yellow">
+                  <Users className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="font-bold text-xl mb-3">Сообщество</h3>
                 <p className="text-muted-foreground">
@@ -90,9 +82,9 @@ const Index = () => {
                 </p>
               </Card>
 
-              <Card className="p-8 gradient-card hover:shadow-elegant transition-smooth text-center">
-                <div className="w-16 h-16 bg-gradient-hero rounded-full flex items-center justify-center mx-auto mb-4 shadow-gold">
-                  <Trophy className="w-8 h-8 text-primary-foreground" />
+              <Card className="p-8 gradient-card hover:shadow-soft transition-smooth text-center border-border/50">
+                <div className="w-16 h-16 gradient-neon rounded-full flex items-center justify-center mx-auto mb-4 shadow-neon-pink">
+                  <Trophy className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="font-bold text-xl mb-3">Геймификация</h3>
                 <p className="text-muted-foreground">
@@ -142,26 +134,26 @@ const Index = () => {
                 </Button>
               </div>
 
-              <Card className="p-8 gradient-card shadow-elegant">
-                <div className="aspect-video bg-gradient-subtle rounded-lg flex items-center justify-center">
+              <Card className="p-8 gradient-card shadow-soft border-border/50">
+                <div className="aspect-video bg-gradient-subtle rounded-lg flex items-center justify-center border border-primary/20">
                   <div className="text-center">
-                    <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4 shadow-neon-pink">
                       <BookOpen className="w-10 h-10 text-primary" />
                     </div>
-                    <p className="text-muted-foreground">3D-просмотр объектов</p>
+                    <p className="text-muted-foreground font-semibold">3D-просмотр объектов</p>
                   </div>
                 </div>
               </Card>
             </div>
 
             <div className="grid md:grid-cols-2 gap-12 items-center">
-              <Card className="p-8 gradient-card shadow-elegant order-2 md:order-1">
-                <div className="aspect-video bg-gradient-subtle rounded-lg flex items-center justify-center">
+              <Card className="p-8 gradient-card shadow-soft order-2 md:order-1 border-border/50">
+                <div className="aspect-video bg-gradient-subtle rounded-lg flex items-center justify-center border border-secondary/20">
                   <div className="text-center">
-                    <div className="w-20 h-20 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <div className="w-20 h-20 bg-secondary/20 rounded-full flex items-center justify-center mx-auto mb-4 shadow-neon-yellow">
                       <Map className="w-10 h-10 text-secondary" />
                     </div>
-                    <p className="text-muted-foreground">Интерактивная карта</p>
+                    <p className="text-muted-foreground font-semibold">Интерактивная карта</p>
                   </div>
                 </div>
               </Card>
@@ -201,16 +193,16 @@ const Index = () => {
         {/* Points System CTA */}
         <section className="py-20 bg-gradient-subtle">
           <div className="container mx-auto px-4">
-            <Card className="relative overflow-hidden p-12 md:p-16 text-center gradient-card shadow-gold max-w-4xl mx-auto">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl" />
-              <div className="absolute bottom-0 left-0 w-64 h-64 bg-secondary/5 rounded-full blur-3xl" />
+            <Card className="relative overflow-hidden p-12 md:p-16 text-center gradient-card shadow-soft max-w-4xl mx-auto border-border/50">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl" />
+              <div className="absolute bottom-0 left-0 w-64 h-64 bg-secondary/10 rounded-full blur-3xl" />
               
               <div className="relative z-10">
-                <div className="w-16 h-16 bg-gradient-hero rounded-full flex items-center justify-center mx-auto mb-6 shadow-gold">
-                  <Upload className="w-8 h-8 text-primary-foreground" />
+                <div className="w-16 h-16 gradient-neon rounded-full flex items-center justify-center mx-auto mb-6 shadow-neon-pink">
+                  <Upload className="w-8 h-8 text-white" />
                 </div>
                 
-                <h2 className="font-serif text-3xl md:text-4xl font-bold mb-4">
+                <h2 className="font-sans text-3xl md:text-4xl font-bold mb-4 neon-text-pink">
                   Внесите свой вклад
                 </h2>
                 <p className="text-lg text-muted-foreground mb-6 max-w-2xl mx-auto">
@@ -220,24 +212,24 @@ const Index = () => {
                 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8 max-w-3xl mx-auto">
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-primary mb-1">10</div>
+                    <div className="text-3xl font-bold text-primary neon-text-pink mb-1">10</div>
                     <div className="text-sm text-muted-foreground">За регистрацию</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-primary mb-1">50</div>
+                    <div className="text-3xl font-bold text-primary neon-text-pink mb-1">50</div>
                     <div className="text-sm text-muted-foreground">За новый проект</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-primary mb-1">5-15</div>
+                    <div className="text-3xl font-bold text-secondary neon-text-yellow mb-1">5-15</div>
                     <div className="text-sm text-muted-foreground">За игру</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-primary mb-1">20</div>
+                    <div className="text-3xl font-bold text-primary neon-text-pink mb-1">20</div>
                     <div className="text-sm text-muted-foreground">За статью</div>
                   </div>
                 </div>
                 
-                <Button size="lg" className="gap-2 shadow-gold">
+                <Button size="lg" className="gap-2">
                   Присоединиться
                   <ArrowRight className="w-5 h-5" />
                 </Button>
