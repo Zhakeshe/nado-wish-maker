@@ -1,0 +1,166 @@
+import { Navigation } from "@/components/Navigation";
+import { Footer } from "@/components/Footer";
+import { Card } from "@/components/ui/card";
+import { Target, Users, Globe, Award } from "lucide-react";
+
+const About = () => {
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Navigation />
+      
+      <main className="flex-1 pt-20 pb-12">
+        {/* Hero */}
+        <section className="bg-gradient-subtle py-16 border-b border-border">
+          <div className="container mx-auto px-4">
+            <h1 className="font-serif text-4xl md:text-6xl font-bold mb-6 max-w-3xl">
+              О проекте Онлайн-Музей Казахстана
+            </h1>
+            <p className="text-xl text-muted-foreground max-w-2xl">
+              Наша миссия — сохранить, изучить и представить культурное наследие Казахстана 
+              с использованием передовых технологий для будущих поколений.
+            </p>
+          </div>
+        </section>
+
+        {/* Mission & Vision */}
+        <section className="container mx-auto px-4 py-16">
+          <div className="grid md:grid-cols-2 gap-8">
+            <Card className="p-8 gradient-card shadow-elegant">
+              <Target className="w-12 h-12 text-primary mb-4" />
+              <h2 className="font-serif text-2xl font-bold mb-4">Наша миссия</h2>
+              <p className="text-muted-foreground leading-relaxed">
+                Создание открытой цифровой платформы для сохранения археологических находок, 
+                архитектурных памятников и культурных объектов Казахстана. Мы делаем культурное 
+                наследие доступным каждому через современные 3D-технологии и интерактивные инструменты.
+              </p>
+            </Card>
+
+            <Card className="p-8 gradient-card shadow-elegant">
+              <Globe className="w-12 h-12 text-secondary mb-4" />
+              <h2 className="font-serif text-2xl font-bold mb-4">Наше видение</h2>
+              <p className="text-muted-foreground leading-relaxed">
+                Стать крупнейшим цифровым музеем Центральной Азии, объединяющим 
+                исследователей, студентов и энтузиастов культуры. Мы стремимся к тому, 
+                чтобы каждый мог внести свой вклад в сохранение истории и получить 
+                доступ к знаниям о прошлом.
+              </p>
+            </Card>
+          </div>
+        </section>
+
+        {/* Key Features */}
+        <section className="bg-muted py-16">
+          <div className="container mx-auto px-4">
+            <h2 className="font-serif text-3xl md:text-4xl font-bold text-center mb-12">
+              Ключевые особенности платформы
+            </h2>
+            
+            <div className="grid md:grid-cols-3 gap-8">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gradient-hero rounded-full flex items-center justify-center mx-auto mb-4 shadow-gold">
+                  <span className="text-3xl">🎯</span>
+                </div>
+                <h3 className="font-bold text-xl mb-3">3D-визуализация</h3>
+                <p className="text-muted-foreground">
+                  Интерактивный просмотр археологических находок и архитектурных объектов 
+                  с возможностью изучения деталей
+                </p>
+              </div>
+
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gradient-hero rounded-full flex items-center justify-center mx-auto mb-4 shadow-gold">
+                  <span className="text-3xl">🗺️</span>
+                </div>
+                <h3 className="font-bold text-xl mb-3">Интерактивная карта</h3>
+                <p className="text-muted-foreground">
+                  Географическое расположение всех объектов культурного наследия 
+                  на карте Казахстана
+                </p>
+              </div>
+
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gradient-hero rounded-full flex items-center justify-center mx-auto mb-4 shadow-gold">
+                  <span className="text-3xl">⭐</span>
+                </div>
+                <h3 className="font-bold text-xl mb-3">Система поинтов</h3>
+                <p className="text-muted-foreground">
+                  Геймификация для вовлечения пользователей: зарабатывайте поинты 
+                  за вклад в развитие коллекции
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Target Audience */}
+        <section className="container mx-auto px-4 py-16">
+          <h2 className="font-serif text-3xl md:text-4xl font-bold text-center mb-12">
+            Для кого наш проект
+          </h2>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card className="p-6 text-center hover:shadow-elegant transition-smooth">
+              <Users className="w-10 h-10 text-primary mx-auto mb-3" />
+              <h3 className="font-bold mb-2">Студенты</h3>
+              <p className="text-sm text-muted-foreground">
+                Доступ к визуальным материалам для учебы и исследований
+              </p>
+            </Card>
+
+            <Card className="p-6 text-center hover:shadow-elegant transition-smooth">
+              <Award className="w-10 h-10 text-primary mx-auto mb-3" />
+              <h3 className="font-bold mb-2">Исследователи</h3>
+              <p className="text-sm text-muted-foreground">
+                Платформа для публикации находок и обмена данными
+              </p>
+            </Card>
+
+            <Card className="p-6 text-center hover:shadow-elegant transition-smooth">
+              <Target className="w-10 h-10 text-primary mx-auto mb-3" />
+              <h3 className="font-bold mb-2">Учителя</h3>
+              <p className="text-sm text-muted-foreground">
+                Интерактивные материалы для проведения уроков истории
+              </p>
+            </Card>
+
+            <Card className="p-6 text-center hover:shadow-elegant transition-smooth">
+              <Globe className="w-10 h-10 text-primary mx-auto mb-3" />
+              <h3 className="font-bold mb-2">Энтузиасты</h3>
+              <p className="text-sm text-muted-foreground">
+                Возможность узнать больше о культуре Казахстана
+              </p>
+            </Card>
+          </div>
+        </section>
+
+        {/* Statistics */}
+        <section className="bg-gradient-hero py-16">
+          <div className="container mx-auto px-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center text-primary-foreground">
+              <div>
+                <div className="font-serif text-4xl md:text-5xl font-bold mb-2">500+</div>
+                <div className="text-sm md:text-base opacity-90">3D-объектов</div>
+              </div>
+              <div>
+                <div className="font-serif text-4xl md:text-5xl font-bold mb-2">1200+</div>
+                <div className="text-sm md:text-base opacity-90">Пользователей</div>
+              </div>
+              <div>
+                <div className="font-serif text-4xl md:text-5xl font-bold mb-2">50+</div>
+                <div className="text-sm md:text-base opacity-90">Исследователей</div>
+              </div>
+              <div>
+                <div className="font-serif text-4xl md:text-5xl font-bold mb-2">15</div>
+                <div className="text-sm md:text-base opacity-90">Регионов</div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <Footer />
+    </div>
+  );
+};
+
+export default About;
