@@ -1,7 +1,8 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Globe } from "lucide-react";
+import { Menu, X, Globe, User } from "lucide-react";
+import { getCurrentUser } from "@/lib/supabase";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +21,7 @@ interface Translations {
   news: string;
   map: string;
   contact: string;
+  login: string;
 }
 
 const translations: Record<Language, Translations> = {
@@ -32,6 +34,7 @@ const translations: Record<Language, Translations> = {
     news: "Новости",
     map: "Карта",
     contact: "Контакты",
+    login: "Войти",
   },
   kz: {
     home: "Басты бет",
@@ -42,6 +45,7 @@ const translations: Record<Language, Translations> = {
     news: "Жаңалықтар",
     map: "Карта",
     contact: "Байланыс",
+    login: "Кіру",
   },
   en: {
     home: "Home",
@@ -52,12 +56,23 @@ const translations: Record<Language, Translations> = {
     news: "News",
     map: "Map",
     contact: "Contact",
+    login: "Login",
   },
 };
 
 export const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [language, setLanguage] = useState<Language>("ru");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const user = await getCurrentUser();
+      setIsAuthenticated(!!user);
+    };
+    checkAuth();
+  }, []);
 
   const t = translations[language];
 
@@ -152,6 +167,17 @@ export const Navigation = () => {
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {/* Auth Button */}
+            {isAuthenticated ? (
+              <Button variant="ghost" size="icon" onClick={() => navigate("/profile")}>
+                <User className="h-5 w-5" />
+              </Button>
+            ) : (
+              <Button onClick={() => navigate("/auth")}>
+                {t.login}
+              </Button>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -247,6 +273,19 @@ export const Navigation = () => {
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
+
+            <div className="pt-4 border-t mt-4">
+              {isAuthenticated ? (
+                <Button className="w-full" onClick={() => { navigate("/profile"); setIsOpen(false); }}>
+                  <User className="h-4 w-4 mr-2" />
+                  Профиль
+                </Button>
+              ) : (
+                <Button className="w-full" onClick={() => { navigate("/auth"); setIsOpen(false); }}>
+                  {t.login}
+                </Button>
+              )}
+            </div>
           </div>
         )}
       </div>
