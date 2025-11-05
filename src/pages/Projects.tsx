@@ -133,47 +133,49 @@ const Projects = () => {
           <div className="container mx-auto px-4">
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {mockProjects.map((project) => (
-                <Card key={project.id} className="overflow-hidden gradient-card hover:shadow-elegant transition-smooth group cursor-pointer">
-                  <div className="aspect-video bg-gradient-subtle flex items-center justify-center relative overflow-hidden">
-                    <div className="absolute inset-0 bg-primary/5 group-hover:bg-primary/10 transition-colors" />
-                    <div className="relative z-10 text-center">
-                      <div className="w-16 h-16 bg-background/80 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-2">
-                        <Eye className="w-8 h-8 text-primary" />
+                <Link to="/viewer" key={project.id}>
+                  <Card className="overflow-hidden gradient-card hover:shadow-elegant transition-smooth group cursor-pointer h-full">
+                    <div className="aspect-video bg-gradient-subtle flex items-center justify-center relative overflow-hidden">
+                      <div className="absolute inset-0 bg-primary/5 group-hover:bg-primary/10 transition-colors" />
+                      <div className="relative z-10 text-center">
+                        <div className="w-16 h-16 bg-background/80 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-smooth">
+                          <Eye className="w-8 h-8 text-primary" />
+                        </div>
+                        <p className="text-sm text-muted-foreground">3D-модель</p>
                       </div>
-                      <p className="text-sm text-muted-foreground">3D-модель</p>
+                      {project.verified && (
+                        <Badge className="absolute top-3 right-3 bg-primary shadow-gold">
+                          Верифицирован
+                        </Badge>
+                      )}
                     </div>
-                    {project.verified && (
-                      <Badge className="absolute top-3 right-3 bg-primary shadow-gold">
-                        Верифицирован
-                      </Badge>
-                    )}
-                  </div>
-                  
-                  <div className="p-6">
-                    <h3 className="font-serif text-xl font-bold mb-3 group-hover:text-primary transition-colors">
-                      {project.title}
-                    </h3>
                     
-                    <div className="space-y-2 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4" />
-                        <span>{project.region}</span>
+                    <div className="p-6">
+                      <h3 className="font-serif text-xl font-bold mb-3 group-hover:text-primary transition-colors">
+                        {project.title}
+                      </h3>
+                      
+                      <div className="space-y-2 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-4 h-4" />
+                          <span>{project.region}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4" />
+                          <span>{project.era}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4" />
-                        <span>{project.era}</span>
-                      </div>
-                    </div>
 
-                    <div className="mt-4 flex items-center justify-between">
-                      <Badge variant="outline">{project.type}</Badge>
-                      <Button size="sm" variant="ghost" className="gap-2">
-                        Подробнее
-                        <Eye className="w-4 h-4" />
-                      </Button>
+                      <div className="mt-4 flex items-center justify-between">
+                        <Badge variant="outline">{project.type}</Badge>
+                        <Button size="sm" variant="ghost" className="gap-2 group-hover:bg-primary group-hover:text-primary-foreground">
+                          Открыть 3D
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                </Card>
+                  </Card>
+                </Link>
               ))}
             </div>
 
