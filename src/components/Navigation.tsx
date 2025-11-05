@@ -13,28 +13,44 @@ type Language = "ru" | "kz" | "en";
 
 interface Translations {
   home: string;
-  collection: string;
+  projects: string;
+  game: string;
   about: string;
+  team: string;
+  news: string;
+  map: string;
   contact: string;
 }
 
 const translations: Record<Language, Translations> = {
   ru: {
     home: "Главная",
-    collection: "Коллекция",
+    projects: "Проекты",
+    game: "Игра",
     about: "О проекте",
+    team: "О нас",
+    news: "Новости",
+    map: "Карта",
     contact: "Контакты",
   },
   kz: {
     home: "Басты бет",
-    collection: "Жинақ",
+    projects: "Жобалар",
+    game: "Ойын",
     about: "Жоба туралы",
+    team: "Біз туралы",
+    news: "Жаңалықтар",
+    map: "Карта",
     contact: "Байланыс",
   },
   en: {
     home: "Home",
-    collection: "Collection",
+    projects: "Projects",
+    game: "Game",
     about: "About",
+    team: "Team",
+    news: "News",
+    map: "Map",
     contact: "Contact",
   },
 };
@@ -60,13 +76,13 @@ export const Navigation = () => {
             <div className="w-10 h-10 bg-gradient-hero rounded-lg flex items-center justify-center shadow-gold">
               <span className="text-2xl">🏛️</span>
             </div>
-            <span className="font-serif font-bold text-xl hidden md:block">
-              Музей Казахстана
+            <span className="font-serif font-bold text-xl hidden md:block bg-gradient-hero bg-clip-text text-transparent">
+              TENGIR
             </span>
           </Link>
 
           {/* Desktop Menu */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center space-x-6">
             <Link
               to="/"
               className="text-foreground hover:text-primary transition-smooth font-medium"
@@ -74,16 +90,40 @@ export const Navigation = () => {
               {t.home}
             </Link>
             <Link
-              to="/collection"
+              to="/projects"
               className="text-foreground hover:text-primary transition-smooth font-medium"
             >
-              {t.collection}
+              {t.projects}
+            </Link>
+            <Link
+              to="/game"
+              className="text-foreground hover:text-primary transition-smooth font-medium"
+            >
+              {t.game}
             </Link>
             <Link
               to="/about"
               className="text-foreground hover:text-primary transition-smooth font-medium"
             >
               {t.about}
+            </Link>
+            <Link
+              to="/team"
+              className="text-foreground hover:text-primary transition-smooth font-medium"
+            >
+              {t.team}
+            </Link>
+            <Link
+              to="/news"
+              className="text-foreground hover:text-primary transition-smooth font-medium"
+            >
+              {t.news}
+            </Link>
+            <Link
+              to="/map"
+              className="text-foreground hover:text-primary transition-smooth font-medium"
+            >
+              {t.map}
             </Link>
             <Link
               to="/contact"
@@ -136,11 +176,18 @@ export const Navigation = () => {
               {t.home}
             </Link>
             <Link
-              to="/collection"
+              to="/projects"
               className="block text-foreground hover:text-primary transition-smooth font-medium"
               onClick={() => setIsOpen(false)}
             >
-              {t.collection}
+              {t.projects}
+            </Link>
+            <Link
+              to="/game"
+              className="block text-foreground hover:text-primary transition-smooth font-medium"
+              onClick={() => setIsOpen(false)}
+            >
+              {t.game}
             </Link>
             <Link
               to="/about"
@@ -148,6 +195,27 @@ export const Navigation = () => {
               onClick={() => setIsOpen(false)}
             >
               {t.about}
+            </Link>
+            <Link
+              to="/team"
+              className="block text-foreground hover:text-primary transition-smooth font-medium"
+              onClick={() => setIsOpen(false)}
+            >
+              {t.team}
+            </Link>
+            <Link
+              to="/news"
+              className="block text-foreground hover:text-primary transition-smooth font-medium"
+              onClick={() => setIsOpen(false)}
+            >
+              {t.news}
+            </Link>
+            <Link
+              to="/map"
+              className="block text-foreground hover:text-primary transition-smooth font-medium"
+              onClick={() => setIsOpen(false)}
+            >
+              {t.map}
             </Link>
             <Link
               to="/contact"
