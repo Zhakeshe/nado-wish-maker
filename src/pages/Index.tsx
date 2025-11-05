@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowRight, Trophy, Map, BookOpen, Users, Star, Upload } from "lucide-react";
 import { Link } from "react-router-dom";
-import heroYurt from "@/assets/hero-yurt.png";
+import heroYurt from "@/assets/hero-yurt-art.jpg";
 
 const Index = () => {
   return (
@@ -23,19 +23,15 @@ const Index = () => {
           <div className="absolute bottom-0 right-0 w-96 h-96 gradient-neon blur-3xl opacity-30 -z-10" />
           
           <div className="container mx-auto text-center relative z-10">
-            <h1 className="font-sans text-6xl md:text-8xl font-black mb-4 neon-text-pink animate-fade-in-up">
+            <h1 className="font-sans text-6xl md:text-8xl font-black mb-8 neon-text-pink animate-fade-in-up">
               TENGIR
             </h1>
             
-            <h2 className="font-sans text-3xl md:text-4xl font-semibold mb-6 neon-text-yellow animate-fade-in-up animate-delay-200">
-              Начать путешествие по Казахстану
-            </h2>
-            
-            <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-3xl mx-auto font-medium animate-fade-in-up animate-delay-400">
+            <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-3xl mx-auto font-medium animate-fade-in-up animate-delay-200">
               Узнай историю Казахстана через интерактивные 3D-объекты и получай пойнты.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up" style={{ animationDelay: '0.6s', animationFillMode: 'backwards' }}>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up animate-delay-400">
               <Button asChild size="lg" className="gap-2 text-lg px-8">
                 <Link to="/game">
                   <Trophy className="w-5 h-5" />
