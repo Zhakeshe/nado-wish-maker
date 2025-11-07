@@ -5,8 +5,120 @@ import { Card } from "@/components/ui/card";
 import { ArrowRight, Trophy, Map, BookOpen, Users, Star, Upload } from "lucide-react";
 import { Link } from "react-router-dom";
 import heroYurt from "@/assets/hero-yurt-art.jpg";
+import { useLanguage, Language } from "@/contexts/LanguageContext";
+
+interface IndexTranslations {
+  heroTitle: string;
+  heroSubtitle: string;
+  startGame: string;
+  register: string;
+  ourMission: string;
+  missionDescription: string;
+  education: string;
+  educationDesc: string;
+  community: string;
+  communityDesc: string;
+  gamification: string;
+  gamificationDesc: string;
+  modelsTitle: string;
+  modelsDescription: string;
+  openGallery: string;
+  gameTitle: string;
+  gameDescription: string;
+  contributeTitle: string;
+  contributeDescription: string;
+  forRegistration: string;
+  forProject: string;
+  forGame: string;
+  forArticle: string;
+  join: string;
+}
+
+const indexTranslations: Record<Language, IndexTranslations> = {
+  ru: {
+    heroTitle: "MuseoNet",
+    heroSubtitle: "Узнай историю Казахстана через интерактивные 3D-объекты и получай пойнты.",
+    startGame: "Начать игру",
+    register: "Зарегистрироваться",
+    ourMission: "Наша миссия",
+    missionDescription: "Объединить историю, технологии и творчество для сохранения и изучения архитектурного наследия Казахстана",
+    education: "Образование",
+    educationDesc: "Делаем изучение истории увлекательным через интерактивные технологии",
+    community: "Сообщество",
+    communityDesc: "Объединяем учеников, учителей и исследователей в одной платформе",
+    gamification: "Геймификация",
+    gamificationDesc: "Зарабатывайте поинты и достижения за изучение культурного наследия",
+    modelsTitle: "3D-модели архитектурных объектов",
+    modelsDescription: "Изучайте знаменитые памятники Казахстана в интерактивном 3D-формате:",
+    openGallery: "Открыть галерею",
+    gameTitle: 'Образовательная игра "Найди на карте"',
+    gameDescription: "Проверьте свои знания географии и истории Казахстана:",
+    contributeTitle: "Внесите свой вклад",
+    contributeDescription: "Станьте частью сообщества исследователей. Добавляйте проекты, публикуйте статьи и зарабатывайте поинты!",
+    forRegistration: "За регистрацию",
+    forProject: "За новый проект",
+    forGame: "За игру",
+    forArticle: "За статью",
+    join: "Присоединиться",
+  },
+  kz: {
+    heroTitle: "MuseoNet",
+    heroSubtitle: "Интерактивті 3D нысандар арқылы Қазақстан тарихын білу және ұпайлар жинау.",
+    startGame: "Ойынды бастау",
+    register: "Тіркелу",
+    ourMission: "Біздің миссия",
+    missionDescription: "Қазақстанның сәулет мұрасын сақтау және зерттеу үшін тарих, технология және шығармашылықты біріктіру",
+    education: "Білім",
+    educationDesc: "Интерактивті технологиялар арқылы тарихты зерттеуді қызықты етеміз",
+    community: "Қоғамдастық",
+    communityDesc: "Оқушылар, мұғалімдер және зерттеушілерді бір платформада біріктіреміз",
+    gamification: "Геймификация",
+    gamificationDesc: "Мәдени мұраны зерттегені үшін ұпайлар мен жетістіктер алыңыз",
+    modelsTitle: "Сәулет нысандарының 3D үлгілері",
+    modelsDescription: "Қазақстанның атақты ескерткіштерін интерактивті 3D форматта зерттеңіз:",
+    openGallery: "Галереяны ашу",
+    gameTitle: '"Картадан тап" білім беру ойыны',
+    gameDescription: "Қазақстанның географиясы мен тарихы бойынша білімді тексеріңіз:",
+    contributeTitle: "Өз үлесіңізді қосыңыз",
+    contributeDescription: "Зерттеушілер қоғамдастығының бөлігі болыңыз. Жобалар қосыңыз, мақалалар жариялаңыз және ұпайлар жинаңыз!",
+    forRegistration: "Тіркелгені үшін",
+    forProject: "Жаңа жоба үшін",
+    forGame: "Ойын үшін",
+    forArticle: "Мақала үшін",
+    join: "Қосылу",
+  },
+  en: {
+    heroTitle: "MuseoNet",
+    heroSubtitle: "Discover Kazakhstan's history through interactive 3D objects and earn points.",
+    startGame: "Start Game",
+    register: "Register",
+    ourMission: "Our Mission",
+    missionDescription: "Unite history, technology and creativity to preserve and study Kazakhstan's architectural heritage",
+    education: "Education",
+    educationDesc: "Making history learning engaging through interactive technologies",
+    community: "Community",
+    communityDesc: "Uniting students, teachers and researchers on one platform",
+    gamification: "Gamification",
+    gamificationDesc: "Earn points and achievements for studying cultural heritage",
+    modelsTitle: "3D Models of Architectural Objects",
+    modelsDescription: "Study famous monuments of Kazakhstan in interactive 3D format:",
+    openGallery: "Open Gallery",
+    gameTitle: '"Find on the Map" Educational Game',
+    gameDescription: "Test your knowledge of Kazakhstan's geography and history:",
+    contributeTitle: "Make Your Contribution",
+    contributeDescription: "Become part of the research community. Add projects, publish articles and earn points!",
+    forRegistration: "For registration",
+    forProject: "For new project",
+    forGame: "For game",
+    forArticle: "For article",
+    join: "Join",
+  },
+};
 
 const Index = () => {
+  const { language } = useLanguage();
+  const t = indexTranslations[language];
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navigation />
@@ -24,24 +136,24 @@ const Index = () => {
           
           <div className="container mx-auto text-center relative z-10">
             <h1 className="font-sans text-6xl md:text-8xl font-black mb-8 text-primary text-glow-pink animate-fade-in-up">
-              TENGIR
+              {t.heroTitle}
             </h1>
             
             <p className="text-xl md:text-2xl text-foreground/80 mb-8 max-w-3xl mx-auto font-medium animate-fade-in-up animate-delay-200">
-              Узнай историю Казахстана через интерактивные 3D-объекты и получай пойнты.
+              {t.heroSubtitle}
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up animate-delay-400">
               <Button asChild size="lg" className="gap-2 text-lg px-8">
                 <Link to="/game">
                   <Trophy className="w-5 h-5" />
-                  Начать игру
+                  {t.startGame}
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="gap-2 text-lg px-8">
                 <Link to="/auth">
                   <Star className="w-5 h-5" />
-                  Зарегистрироваться
+                  {t.register}
                 </Link>
               </Button>
             </div>
@@ -53,11 +165,10 @@ const Index = () => {
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
               <h2 className="font-sans text-3xl md:text-5xl font-bold mb-4 text-primary text-glow-pink">
-                Наша миссия
+                {t.ourMission}
               </h2>
               <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-                Объединить историю, технологии и творчество для сохранения и изучения 
-                архитектурного наследия Казахстана
+                {t.missionDescription}
               </p>
             </div>
 
@@ -66,9 +177,9 @@ const Index = () => {
                 <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <BookOpen className="w-8 h-8 text-primary" />
                 </div>
-                <h3 className="font-bold text-xl mb-3 text-foreground">Образование</h3>
+                <h3 className="font-bold text-xl mb-3 text-foreground">{t.education}</h3>
                 <p className="text-muted-foreground">
-                  Делаем изучение истории увлекательным через интерактивные технологии
+                  {t.educationDesc}
                 </p>
               </Card>
 
@@ -76,9 +187,9 @@ const Index = () => {
                 <div className="w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Users className="w-8 h-8 text-secondary" />
                 </div>
-                <h3 className="font-bold text-xl mb-3 text-foreground">Сообщество</h3>
+                <h3 className="font-bold text-xl mb-3 text-foreground">{t.community}</h3>
                 <p className="text-muted-foreground">
-                  Объединяем учеников, учителей и исследователей в одной платформе
+                  {t.communityDesc}
                 </p>
               </Card>
 
@@ -86,9 +197,9 @@ const Index = () => {
                 <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Trophy className="w-8 h-8 text-primary" />
                 </div>
-                <h3 className="font-bold text-xl mb-3 text-foreground">Геймификация</h3>
+                <h3 className="font-bold text-xl mb-3 text-foreground">{t.gamification}</h3>
                 <p className="text-muted-foreground">
-                  Зарабатывайте поинты и достижения за изучение культурного наследия
+                  {t.gamificationDesc}
                 </p>
               </Card>
             </div>
@@ -101,10 +212,10 @@ const Index = () => {
             <div className="grid md:grid-cols-2 gap-12 items-center mb-16">
               <div>
                 <h2 className="font-serif text-3xl md:text-4xl font-bold mb-6">
-                  3D-модели архитектурных объектов
+                  {t.modelsTitle}
                 </h2>
                 <p className="text-lg text-muted-foreground mb-6">
-                  Изучайте знаменитые памятники Казахстана в интерактивном 3D-формате:
+                  {t.modelsDescription}
                 </p>
                 <ul className="space-y-3 mb-8">
                   <li className="flex items-start gap-3">
@@ -128,7 +239,7 @@ const Index = () => {
                 </ul>
                 <Button asChild className="gap-2">
                   <Link to="/projects">
-                    Открыть галерею
+                    {t.openGallery}
                     <ArrowRight className="w-4 h-4" />
                   </Link>
                 </Button>
@@ -160,10 +271,10 @@ const Index = () => {
 
               <div className="order-1 md:order-2">
                 <h2 className="font-serif text-3xl md:text-4xl font-bold mb-6">
-                  Образовательная игра "Найди на карте"
+                  {t.gameTitle}
                 </h2>
                 <p className="text-lg text-muted-foreground mb-6">
-                  Проверьте свои знания географии и истории Казахстана:
+                  {t.gameDescription}
                 </p>
                 <ul className="space-y-3 mb-8">
                   <li className="flex items-start gap-3">
@@ -181,7 +292,7 @@ const Index = () => {
                 </ul>
                 <Button asChild variant="outline" className="gap-2">
                   <Link to="/game">
-                    Начать игру
+                    {t.startGame}
                     <ArrowRight className="w-4 h-4" />
                   </Link>
                 </Button>
@@ -203,34 +314,33 @@ const Index = () => {
                 </div>
                 
                 <h2 className="font-sans text-3xl md:text-4xl font-bold mb-4 text-primary text-glow-pink">
-                  Внесите свой вклад
+                  {t.contributeTitle}
                 </h2>
                 <p className="text-lg text-muted-foreground mb-6 max-w-2xl mx-auto">
-                  Станьте частью сообщества исследователей. Добавляйте проекты, 
-                  публикуйте статьи и зарабатывайте поинты!
+                  {t.contributeDescription}
                 </p>
                 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8 max-w-3xl mx-auto">
                   <div className="text-center">
                     <div className="text-3xl font-bold text-primary text-glow-pink mb-1">10</div>
-                    <div className="text-sm text-muted-foreground">За регистрацию</div>
+                    <div className="text-sm text-muted-foreground">{t.forRegistration}</div>
                   </div>
                   <div className="text-center">
                     <div className="text-3xl font-bold text-primary text-glow-pink mb-1">50</div>
-                    <div className="text-sm text-muted-foreground">За новый проект</div>
+                    <div className="text-sm text-muted-foreground">{t.forProject}</div>
                   </div>
                   <div className="text-center">
                     <div className="text-3xl font-bold text-secondary text-glow-yellow mb-1">5-15</div>
-                    <div className="text-sm text-muted-foreground">За игру</div>
+                    <div className="text-sm text-muted-foreground">{t.forGame}</div>
                   </div>
                   <div className="text-center">
                     <div className="text-3xl font-bold text-primary text-glow-pink mb-1">20</div>
-                    <div className="text-sm text-muted-foreground">За статью</div>
+                    <div className="text-sm text-muted-foreground">{t.forArticle}</div>
                   </div>
                 </div>
                 
                 <Button size="lg" className="gap-2">
-                  Присоединиться
+                  {t.join}
                   <ArrowRight className="w-5 h-5" />
                 </Button>
               </div>

@@ -9,8 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-type Language = "ru" | "kz" | "en";
+import { useLanguage, Language } from "@/contexts/LanguageContext";
 
 interface Translations {
   home: string;
@@ -62,7 +61,7 @@ const translations: Record<Language, Translations> = {
 
 export const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [language, setLanguage] = useState<Language>("ru");
+  const { language, setLanguage } = useLanguage();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
 
@@ -92,7 +91,7 @@ export const Navigation = () => {
               <span className="text-2xl">🏛️</span>
             </div>
             <span className="font-serif font-bold text-xl hidden md:block bg-gradient-hero bg-clip-text text-transparent">
-              TENGIR
+              MuseoNet
             </span>
           </Link>
 
