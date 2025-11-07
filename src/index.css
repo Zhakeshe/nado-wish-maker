@@ -49,12 +49,16 @@ All colors MUST be HSL.
     --gradient-soft: linear-gradient(135deg, hsl(346 79% 56% / 0.05), hsl(43 100% 70% / 0.05));
     --gradient-subtle: linear-gradient(180deg, hsl(0 0% 100%), hsl(30 30% 96%));
     --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(30 30% 98%));
+    --gradient-archaeology: linear-gradient(135deg, hsl(30 40% 85%), hsl(35 50% 75%));
+    --gradient-bronze: linear-gradient(135deg, hsl(30 50% 60%), hsl(35 60% 50%));
 
     /* Soft Shadows */
     --shadow-soft-pink: 0 4px 20px hsl(346 79% 56% / 0.15);
     --shadow-soft-yellow: 0 4px 20px hsl(43 100% 70% / 0.15);
     --shadow-elegant: 0 4px 24px hsl(0 0% 0% / 0.08);
     --shadow-card: 0 2px 12px hsl(0 0% 0% / 0.06);
+    --shadow-gold: 0 6px 24px hsl(43 100% 70% / 0.25);
+    --shadow-bronze: 0 4px 16px hsl(35 60% 50% / 0.3);
 
     /* Transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -184,5 +188,35 @@ All colors MUST be HSL.
   .animate-delay-400 {
     animation-delay: 0.4s;
     animation-fill-mode: backwards;
+  }
+
+  /* Archaeological theme styles */
+  .shadow-gold {
+    box-shadow: var(--shadow-gold);
+  }
+
+  .shadow-bronze {
+    box-shadow: var(--shadow-bronze);
+  }
+
+  .gradient-archaeology {
+    background: var(--gradient-archaeology);
+  }
+
+  .gradient-bronze {
+    background: var(--gradient-bronze);
+  }
+
+  /* Parchment texture effect */
+  .parchment-texture {
+    background-image: 
+      linear-gradient(rgba(245, 239, 230, 0.95), rgba(245, 239, 230, 0.95)),
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(212, 165, 116, 0.03) 2px,
+        rgba(212, 165, 116, 0.03) 4px
+      );
   }
 }
