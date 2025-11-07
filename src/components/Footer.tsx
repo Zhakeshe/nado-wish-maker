@@ -12,7 +12,7 @@ export const Footer = () => {
               <div className="w-8 h-8 bg-gradient-hero rounded-lg flex items-center justify-center">
                 <span className="text-xl">🏛️</span>
               </div>
-              <span className="font-serif font-bold">Музей Казахстана</span>
+              <span className="font-serif font-bold">MuseoNet</span>
             </div>
             <p className="text-sm text-muted-foreground">
               Цифровой музей, сохраняющий культурное наследие Казахстана для будущих поколений.
@@ -35,12 +35,7 @@ export const Footer = () => {
               </li>
               <li>
                 <Link to="/about" className="text-muted-foreground hover:text-primary transition-smooth">
-                  О проекте
-                </Link>
-              </li>
-              <li>
-                <Link to="/contact" className="text-muted-foreground hover:text-primary transition-smooth">
-                  Контакты
+                  О нас
                 </Link>
               </li>
             </ul>
@@ -83,11 +78,11 @@ export const Footer = () => {
               </li>
               <li className="flex items-start gap-2">
                 <Phone className="w-4 h-4 text-primary mt-0.5" />
-                <span className="text-muted-foreground">+7 (700) 123-45-67</span>
+                <span className="text-muted-foreground">+7 700 255 18 36</span>
               </li>
               <li className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 text-primary mt-0.5" />
-                <span className="text-muted-foreground">Астана, Казахстан</span>
+                <span className="text-muted-foreground">Ақтау, Қазақстан</span>
               </li>
             </ul>
           </div>
@@ -95,7 +90,7 @@ export const Footer = () => {
 
         <div className="border-t border-border mt-8 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm text-muted-foreground">
-            © 2024 Онлайн-Музей Казахстана. Все права защищены.
+            © 2024 MuseoNet. Все права защищены.
           </p>
           <div className="flex gap-6 text-sm">
             <a href="#" className="text-muted-foreground hover:text-primary transition-smooth">

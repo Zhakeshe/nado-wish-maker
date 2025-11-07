@@ -16,10 +16,8 @@ interface Translations {
   projects: string;
   game: string;
   about: string;
-  team: string;
   news: string;
   map: string;
-  contact: string;
   login: string;
 }
 
@@ -28,33 +26,27 @@ const translations: Record<Language, Translations> = {
     home: "Главная",
     projects: "Проекты",
     game: "Игра",
-    about: "О проекте",
-    team: "О нас",
+    about: "О нас",
     news: "Новости",
     map: "Карта",
-    contact: "Контакты",
     login: "Войти",
   },
   kz: {
     home: "Басты бет",
     projects: "Жобалар",
     game: "Ойын",
-    about: "Жоба туралы",
-    team: "Біз туралы",
+    about: "Біз туралы",
     news: "Жаңалықтар",
     map: "Карта",
-    contact: "Байланыс",
     login: "Кіру",
   },
   en: {
     home: "Home",
     projects: "Projects",
     game: "Game",
-    about: "About",
-    team: "Team",
+    about: "About Us",
     news: "News",
     map: "Map",
-    contact: "Contact",
     login: "Login",
   },
 };
@@ -122,12 +114,6 @@ export const Navigation = () => {
               {t.about}
             </Link>
             <Link
-              to="/team"
-              className="text-foreground hover:text-primary transition-smooth font-medium"
-            >
-              {t.team}
-            </Link>
-            <Link
               to="/news"
               className="text-foreground hover:text-primary transition-smooth font-medium"
             >
@@ -138,12 +124,6 @@ export const Navigation = () => {
               className="text-foreground hover:text-primary transition-smooth font-medium"
             >
               {t.map}
-            </Link>
-            <Link
-              to="/contact"
-              className="text-foreground hover:text-primary transition-smooth font-medium"
-            >
-              {t.contact}
             </Link>
 
             {/* Language Switcher */}
@@ -222,13 +202,6 @@ export const Navigation = () => {
               {t.about}
             </Link>
             <Link
-              to="/team"
-              className="block text-foreground hover:text-primary transition-smooth font-medium"
-              onClick={() => setIsOpen(false)}
-            >
-              {t.team}
-            </Link>
-            <Link
               to="/news"
               className="block text-foreground hover:text-primary transition-smooth font-medium"
               onClick={() => setIsOpen(false)}
@@ -241,13 +214,6 @@ export const Navigation = () => {
               onClick={() => setIsOpen(false)}
             >
               {t.map}
-            </Link>
-            <Link
-              to="/contact"
-              className="block text-foreground hover:text-primary transition-smooth font-medium"
-              onClick={() => setIsOpen(false)}
-            >
-              {t.contact}
             </Link>
 
             <DropdownMenu>
