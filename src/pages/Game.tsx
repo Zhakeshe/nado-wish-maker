@@ -207,6 +207,38 @@ const Game = () => {
             </div>
           </section>
 
+          {/* Kazakhstan Map */}
+          <section className="py-8 bg-background">
+            <div className="container mx-auto px-4">
+              <div className="max-w-4xl mx-auto">
+                <Card className="p-4 gradient-card shadow-elegant">
+                  <div className="mb-4 text-center">
+                    <h2 className="font-serif text-2xl font-bold text-foreground">
+                      {language === 'ru' ? 'Карта Казахстана' : language === 'kz' ? 'Қазақстан картасы' : 'Map of Kazakhstan'}
+                    </h2>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      {language === 'ru' ? 'Изучите географию археологических находок' : 
+                       language === 'kz' ? 'Археологиялық табылымдардың географиясын зерттеңіз' : 
+                       'Explore the geography of archaeological finds'}
+                    </p>
+                  </div>
+                  <div className="relative overflow-hidden" style={{ borderRadius: '10px' }}>
+                    <iframe 
+                      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2323142.0616304865!2d59.5!3d47.9!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x424580b0a8d0d0db%3A0x74a13f787c0e908d!2z0JrQvtC80L7RgdGC0LjQvdCw0Y8g0JrQsNC70LDRgtC40LrQvtCy0LAsINCQ0LvQv9C10YHRgtC40YLQsA!5e0!3m2!1sru!2skz!4v1698599999999!5m2!1sru!2skz" 
+                      width="100%" 
+                      height="500" 
+                      style={{ border: 0, borderRadius: '10px', filter: 'sepia(0.15) hue-rotate(10deg) saturate(0.9)' }}
+                      allowFullScreen
+                      loading="lazy"
+                      title="Kazakhstan Map"
+                      className="w-full"
+                    />
+                  </div>
+                </Card>
+              </div>
+            </div>
+          </section>
+
           {/* Game Stats */}
           <section className="py-8 border-b border-border">
             <div className="container mx-auto px-4">
