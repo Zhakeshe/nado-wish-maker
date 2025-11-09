@@ -29,8 +29,8 @@ const createCustomIcon = () => {
   });
 };
 
-// Component to handle map effects
-const MapEffects = () => {
+// Component to handle map effects and initialization
+const MapEffects = ({ onMapReady }: { onMapReady: (map: L.Map) => void }) => {
   const map = useMap();
   
   useEffect(() => {
@@ -50,10 +50,13 @@ const MapEffects = () => {
     `;
     document.head.appendChild(style);
     
+    // Pass map instance to parent
+    onMapReady(map);
+    
     return () => {
       document.head.removeChild(style);
     };
-  }, []);
+  }, [map, onMapReady]);
   
   return null;
 };
@@ -83,9 +86,8 @@ export const ArchaeologyMap = ({ onRegionClick, highlightedRegion }: Archaeology
           zoom={5}
           className="w-full h-full"
           zoomControl={true}
-          ref={setMap}
         >
-          <MapEffects />
+          <MapEffects onMapReady={setMap} />
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
