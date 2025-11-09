@@ -121,6 +121,55 @@ All colors MUST be HSL.
 }
 
 @layer utilities {
+  /* Archaeological theme */
+  .gradient-archaeology {
+    background: linear-gradient(135deg, #F5EFE6 0%, #E8DCC4 100%);
+  }
+  
+  .gradient-bronze {
+    background: linear-gradient(135deg, #D4A574 0%, #C4915F 100%);
+  }
+  
+  .gradient-sand {
+    background: linear-gradient(180deg, #F5EFE6 0%, #FFF8E7 100%);
+  }
+  
+  .shadow-gold {
+    box-shadow: 0 8px 24px rgba(212, 165, 116, 0.3);
+  }
+  
+  .shadow-bronze {
+    box-shadow: 0 4px 16px rgba(196, 145, 95, 0.25);
+  }
+  
+  .shadow-soft {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+  
+  .parchment-texture {
+    background-image: 
+      repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,.03) 2px, rgba(0,0,0,.03) 4px),
+      repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0,0,0,.03) 2px, rgba(0,0,0,.03) 4px);
+  }
+  
+  .archaeological-border {
+    border: 2px solid;
+    border-image: linear-gradient(135deg, #D4A574, #C4915F, #D4A574) 1;
+  }
+  
+  @keyframes pulse-gold {
+    0%, 100% {
+      box-shadow: 0 0 0 0 rgba(212, 165, 116, 0.7);
+    }
+    50% {
+      box-shadow: 0 0 0 10px rgba(212, 165, 116, 0);
+    }
+  }
+  
+  .animate-pulse-gold {
+    animation: pulse-gold 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
   .gradient-hero {
     background: var(--gradient-hero);
   }

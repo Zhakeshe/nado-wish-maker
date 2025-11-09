@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Trophy, Star, Target, Award, CheckCircle, XCircle } from "lucide-react";
-import { ArchaeologyMap } from "@/components/game/ArchaeologyMap";
+import { Trophy, Star, Target, Award, CheckCircle, XCircle, Sparkles, MapPin } from "lucide-react";
+import { HistoricalFactModal } from "@/components/game/HistoricalFactModal";
 import { archaeologicalObjects } from "@/data/archaeologicalObjects";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +21,7 @@ const Game = () => {
   const [showResult, setShowResult] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [showHistoricalFact, setShowHistoricalFact] = useState(false);
   const { toast } = useToast();
   const { language } = useLanguage();
 
@@ -89,6 +90,11 @@ const Game = () => {
         }
       }
 
+      // Show historical fact modal after correct answer
+      setTimeout(() => {
+        setShowHistoricalFact(true);
+      }, 1500);
+
       toast({
         title: language === 'ru' ? "Правильно!" : language === 'kz' ? "Дұрыс!" : "Correct!",
         description: language === 'ru' ? `Вы заработали ${points} поинтов знаний` :
@@ -107,6 +113,7 @@ const Game = () => {
   };
 
   const nextQuestion = () => {
+    setShowHistoricalFact(false);
     if (currentObjectIndex < archaeologicalObjects.length - 1) {
       setCurrentObjectIndex(prev => prev + 1);
       setSelectedRegion("");
@@ -183,12 +190,21 @@ const Game = () => {
   const t = translations[language];
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gradient-sand">
       <Navigation />
+      
+      {/* Historical Fact Modal */}
+      {showHistoricalFact && (
+        <HistoricalFactModal
+          object={currentObject}
+          onClose={() => setShowHistoricalFact(false)}
+          language={language}
+        />
+      )}
         
-        <main className="flex-1 pt-20">
-          {/* Header */}
-          <section className="py-16 bg-gradient-subtle">
+      <main className="flex-1 pt-20">
+        {/* Header */}
+        <section className="py-12 md:py-16 bg-gradient-archaeology">
             <div className="container mx-auto px-4">
               <div className="max-w-3xl mx-auto text-center">
                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-background rounded-full mb-6 border border-primary/20">
@@ -204,31 +220,41 @@ const Game = () => {
           </section>
 
           {/* Kazakhstan Map */}
-          <section className="py-8 bg-background">
+          <section className="py-6 md:py-8 bg-gradient-sand">
             <div className="container mx-auto px-4">
               <div className="max-w-4xl mx-auto">
-                <Card className="p-4 gradient-card shadow-elegant">
-                  <div className="mb-4 text-center">
-                    <h2 className="font-serif text-2xl font-bold text-foreground">
-                      {language === 'ru' ? 'Карта Казахстана' : language === 'kz' ? 'Қазақстан картасы' : 'Map of Kazakhstan'}
-                    </h2>
-                    <p className="text-sm text-muted-foreground mt-2">
+                <Card className="p-4 md:p-6 gradient-archaeology shadow-elegant border-2 border-primary/30">
+                  <div className="mb-4 md:mb-6 text-center">
+                    <div className="inline-flex items-center gap-2 mb-3">
+                      <MapPin className="w-5 h-5 text-primary" />
+                      <h2 className="font-serif text-xl md:text-2xl font-bold text-foreground">
+                        {language === 'ru' ? 'Карта Казахстана' : language === 'kz' ? 'Қазақстан картасы' : 'Map of Kazakhstan'}
+                      </h2>
+                    </div>
+                    <p className="text-xs md:text-sm text-muted-foreground">
                       {language === 'ru' ? 'Изучите географию археологических находок' : 
                        language === 'kz' ? 'Археологиялық табылымдардың географиясын зерттеңіз' : 
                        'Explore the geography of archaeological finds'}
                     </p>
                   </div>
-                  <div className="relative overflow-hidden" style={{ borderRadius: '10px' }}>
+                  <div className="relative overflow-hidden" style={{ borderRadius: '10px', boxShadow: '0 4px 16px rgba(212, 165, 116, 0.3)' }}>
                     <iframe 
                       src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2323142.0616304865!2d59.5!3d47.9!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x424580b0a8d0d0db%3A0x74a13f787c0e908d!2z0JrQvtC80L7RgdGC0LjQvdCw0Y8g0JrQsNC70LDRgtC40LrQvtCy0LAsINCQ0LvQv9C10YHRgtC40YLQsA!5e0!3m2!1sru!2skz!4v1698599999999!5m2!1sru!2skz" 
                       width="100%" 
-                      height="500" 
-                      style={{ border: 0, borderRadius: '10px', filter: 'sepia(0.15) hue-rotate(10deg) saturate(0.9)' }}
+                      height="400"
+                      style={{ border: 0, borderRadius: '10px', filter: 'sepia(0.2) hue-rotate(10deg) saturate(0.85)' }}
                       allowFullScreen
                       loading="lazy"
                       title="Kazakhstan Map"
-                      className="w-full"
+                      className="w-full md:h-[500px]"
                     />
+                  </div>
+                  <div className="mt-4 text-center">
+                    <p className="text-xs text-muted-foreground italic">
+                      {language === 'ru' ? 'По данным археологических исследований Казахстана' :
+                       language === 'kz' ? 'Қазақстанның археологиялық зерттеулері бойынша' :
+                       'According to archaeological research of Kazakhstan'}
+                    </p>
                   </div>
                 </Card>
               </div>
@@ -236,31 +262,34 @@ const Game = () => {
           </section>
 
           {/* Game Stats */}
-          <section className="py-8 border-b border-border">
+          <section className="py-6 md:py-8 border-y border-primary/10 bg-background/50">
             <div className="container mx-auto px-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
-                <Card className="p-4 text-center gradient-card">
-                  <Star className="w-6 h-6 text-primary mx-auto mb-2 fill-primary" />
-                  <div className="text-2xl font-bold mb-1">{score}</div>
-                  <div className="text-xs text-muted-foreground">{t.points}</div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 max-w-4xl mx-auto">
+                <Card className="p-4 md:p-6 text-center gradient-archaeology shadow-soft hover:shadow-gold transition-all hover:scale-105">
+                  <div className="relative">
+                    <Star className="w-7 h-7 md:w-8 md:h-8 text-primary mx-auto mb-2 fill-primary animate-pulse-gold" />
+                    <Sparkles className="w-3 h-3 text-primary/50 absolute top-0 right-1/4" />
+                  </div>
+                  <div className="text-2xl md:text-3xl font-bold mb-1 bg-gradient-bronze bg-clip-text text-transparent">{score}</div>
+                  <div className="text-xs text-muted-foreground font-medium">{t.points}</div>
                 </Card>
                 
-                <Card className="p-4 text-center gradient-card">
-                  <Target className="w-6 h-6 text-secondary mx-auto mb-2" />
-                  <div className="text-2xl font-bold mb-1">{currentObjectIndex + 1}</div>
-                  <div className="text-xs text-muted-foreground">{t.level}</div>
+                <Card className="p-4 md:p-6 text-center gradient-archaeology shadow-soft hover:shadow-gold transition-all hover:scale-105">
+                  <Target className="w-7 h-7 md:w-8 md:h-8 text-secondary mx-auto mb-2" />
+                  <div className="text-2xl md:text-3xl font-bold mb-1">{currentObjectIndex + 1}/{archaeologicalObjects.length}</div>
+                  <div className="text-xs text-muted-foreground font-medium">{t.level}</div>
                 </Card>
                 
-                <Card className="p-4 text-center gradient-card">
-                  <Trophy className="w-6 h-6 text-accent mx-auto mb-2" />
-                  <div className="text-2xl font-bold mb-1">{accuracy}%</div>
-                  <div className="text-xs text-muted-foreground">{t.accuracy}</div>
+                <Card className="p-4 md:p-6 text-center gradient-archaeology shadow-soft hover:shadow-gold transition-all hover:scale-105">
+                  <Trophy className="w-7 h-7 md:w-8 md:h-8 text-accent mx-auto mb-2" />
+                  <div className="text-2xl md:text-3xl font-bold mb-1">{accuracy}%</div>
+                  <div className="text-xs text-muted-foreground font-medium">{t.accuracy}</div>
                 </Card>
                 
-                <Card className="p-4 text-center gradient-card">
-                  <Award className="w-6 h-6 text-primary mx-auto mb-2" />
-                  <div className="text-2xl font-bold mb-1">{correctAnswers}</div>
-                  <div className="text-xs text-muted-foreground">{t.achievements}</div>
+                <Card className="p-4 md:p-6 text-center gradient-archaeology shadow-soft hover:shadow-gold transition-all hover:scale-105">
+                  <Award className="w-7 h-7 md:w-8 md:h-8 text-primary mx-auto mb-2" />
+                  <div className="text-2xl md:text-3xl font-bold mb-1">{correctAnswers}</div>
+                  <div className="text-xs text-muted-foreground font-medium">{t.achievements}</div>
                 </Card>
               </div>
             </div>
@@ -272,67 +301,81 @@ const Game = () => {
               <div className="max-w-7xl mx-auto">
                 <div className="grid lg:grid-cols-3 gap-8">
                   {/* Left Panel - Object */}
-                  <div className="lg:col-span-1 space-y-6">
-                    <Card className="p-6 gradient-card shadow-elegant border-2 border-primary/20">
-                      <Badge className="mb-4 bg-primary/10 text-primary border-primary/20">
+                  <div className="lg:col-span-1 space-y-4 md:space-y-6">
+                    <Card className="p-4 md:p-6 gradient-archaeology shadow-elegant border-2 border-primary/30 hover:shadow-gold transition-all">
+                      <Badge className="mb-4 bg-primary/10 text-primary border-primary/20 text-xs">
                         {language === 'ru' ? 'Объект' : language === 'kz' ? 'Нысан' : 'Object'} {currentObjectIndex + 1}/{archaeologicalObjects.length}
                       </Badge>
                       
                       {/* Object Details */}
-                      <div className="p-4 rounded-lg mb-4" style={{
+                      <div className="p-4 md:p-5 rounded-lg mb-4 parchment-texture relative overflow-hidden" style={{
                         border: '2px solid #D4A574',
-                        background: 'linear-gradient(135deg, rgba(245, 239, 230, 0.9) 0%, rgba(255, 255, 255, 0.9) 100%)',
+                        background: 'linear-gradient(135deg, rgba(245, 239, 230, 0.95) 0%, rgba(255, 255, 255, 0.95) 100%)',
                       }}>
-                        <h3 className="font-serif text-lg font-bold mb-2">
+                        {/* Decorative corner */}
+                        <div className="absolute top-0 right-0 w-16 h-16 opacity-10">
+                          <MapPin className="w-full h-full text-primary" />
+                        </div>
+                        
+                        <h3 className="font-serif text-lg md:text-xl font-bold mb-3 text-foreground relative">
                           {currentObject.name}
                         </h3>
                         
                         <div className="flex items-center gap-2 mb-3">
-                          <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary font-medium">
+                          <span className="text-xs px-3 py-1 rounded-full bg-primary/10 text-primary font-medium">
                             {currentObject.era}
                           </span>
                         </div>
                         
-                        <p className="text-muted-foreground text-xs leading-relaxed mb-3">
+                        <p className="text-muted-foreground text-xs md:text-sm leading-relaxed mb-4">
                           {currentObject.description}
                         </p>
                         
-                        <div className="pt-3 border-t border-border/50">
-                          <p className="text-xs text-muted-foreground mb-2">
+                        <div className="pt-3 border-t-2 border-primary/20">
+                          <p className="text-xs text-muted-foreground mb-2 flex items-center gap-2">
+                            <MapPin className="w-3 h-3" />
                             {language === 'ru' ? 'Выберите регион на карте' : language === 'kz' ? 'Картадан өңірді таңдаңыз' : 'Select region on map'}
                           </p>
-                          <div className="flex items-center justify-between">
+                          <div className="flex items-center justify-between bg-gradient-bronze/10 p-2 rounded">
                             <span className="text-xs text-muted-foreground">
                               {language === 'ru' ? 'За правильный ответ:' : language === 'kz' ? 'Дұрыс жауап үшін:' : 'For correct answer:'}
                             </span>
-                            <span className="text-xs font-bold text-primary">+{currentObject.points} {language === 'ru' ? 'поинтов' : language === 'kz' ? 'ұпай' : 'points'}</span>
+                            <span className="text-sm font-bold text-primary flex items-center gap-1">
+                              <Sparkles className="w-4 h-4" />
+                              +{currentObject.points}
+                            </span>
                           </div>
                         </div>
                       </div>
                       
                       {showResult && (
-                        <div className={`mt-6 p-4 rounded-lg ${isCorrect ? 'bg-green-50 border-2 border-green-500' : 'bg-red-50 border-2 border-red-500'}`}>
-                          <div className="flex items-center gap-2 mb-2">
+                        <div className={`mt-4 md:mt-6 p-4 md:p-5 rounded-lg animate-scale-in ${
+                          isCorrect 
+                            ? 'bg-green-50 dark:bg-green-950/30 border-2 border-green-500' 
+                            : 'bg-red-50 dark:bg-red-950/30 border-2 border-red-500'
+                        }`}>
+                          <div className="flex items-center gap-2 mb-3">
                             {isCorrect ? (
                               <>
-                                <CheckCircle className="w-5 h-5 text-green-600" />
-                                <span className="font-bold text-green-600">
+                                <CheckCircle className="w-6 h-6 text-green-600 animate-scale-in" />
+                                <span className="font-bold text-green-600 text-base md:text-lg">
                                   {language === 'ru' ? 'Правильно!' : language === 'kz' ? 'Дұрыс!' : 'Correct!'}
                                 </span>
+                                <Sparkles className="w-5 h-5 text-green-500 ml-auto" />
                               </>
                             ) : (
                               <>
-                                <XCircle className="w-5 h-5 text-red-600" />
-                                <span className="font-bold text-red-600">
+                                <XCircle className="w-6 h-6 text-red-600" />
+                                <span className="font-bold text-red-600 text-base md:text-lg">
                                   {language === 'ru' ? 'Неправильно' : language === 'kz' ? 'Қате' : 'Incorrect'}
                                 </span>
                               </>
                             )}
                           </div>
                           <p className="text-sm text-muted-foreground mb-4">
-                            {language === 'ru' ? 'Правильный регион:' : language === 'kz' ? 'Дұрыс өңір:' : 'Correct region:'} <strong>{currentObject.region}</strong>
+                            {language === 'ru' ? 'Правильный регион:' : language === 'kz' ? 'Дұрыс өңір:' : 'Correct region:'} <strong className="text-foreground">{currentObject.region}</strong>
                           </p>
-                          <Button onClick={nextQuestion} className="w-full">
+                          <Button onClick={nextQuestion} className="w-full" size="lg">
                             {t.next}
                           </Button>
                         </div>
@@ -354,36 +397,64 @@ const Game = () => {
                     </Card>
 
                     {/* How to Play */}
-                    <Card className="p-6 gradient-card">
-                      <h3 className="font-bold text-lg mb-4">{t.howToPlay}</h3>
-                      <ul className="space-y-2 text-sm text-muted-foreground">
-                        <li className="flex items-start gap-2">
-                          <span className="text-primary font-bold">1.</span>
-                          {t.step1}
+                    <Card className="p-4 md:p-6 gradient-archaeology shadow-soft border border-primary/20">
+                      <h3 className="font-bold text-base md:text-lg mb-4 text-primary">{t.howToPlay}</h3>
+                      <ul className="space-y-3 text-xs md:text-sm text-muted-foreground">
+                        <li className="flex items-start gap-3 p-2 rounded hover:bg-muted/30 transition-colors">
+                          <span className="text-primary font-bold text-base">1.</span>
+                          <span className="leading-relaxed">{t.step1}</span>
                         </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-primary font-bold">2.</span>
-                          {t.step2}
+                        <li className="flex items-start gap-3 p-2 rounded hover:bg-muted/30 transition-colors">
+                          <span className="text-primary font-bold text-base">2.</span>
+                          <span className="leading-relaxed">{t.step2}</span>
                         </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-primary font-bold">3.</span>
-                          {t.step3}
+                        <li className="flex items-start gap-3 p-2 rounded hover:bg-muted/30 transition-colors">
+                          <span className="text-primary font-bold text-base">3.</span>
+                          <span className="leading-relaxed">{t.step3}</span>
                         </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-primary font-bold">4.</span>
-                          {t.step4}
+                        <li className="flex items-start gap-3 p-2 rounded hover:bg-muted/30 transition-colors">
+                          <span className="text-primary font-bold text-base">4.</span>
+                          <span className="leading-relaxed">{t.step4}</span>
                         </li>
                       </ul>
                     </Card>
                   </div>
 
-                  {/* Right Panel - Map */}
+                  {/* Right Panel - Interactive Game Area */}
                   <div className="lg:col-span-2">
-                    <Card className="p-2 gradient-card shadow-elegant" style={{ height: '700px' }}>
-                      <ArchaeologyMap 
-                        onRegionClick={setSelectedRegion}
-                        highlightedRegion={selectedRegion}
-                      />
+                    <Card className="p-4 md:p-6 gradient-archaeology shadow-elegant border-2 border-primary/30">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-serif text-lg md:text-xl font-bold flex items-center gap-2">
+                          <MapPin className="w-5 h-5 text-primary" />
+                          {language === 'ru' ? 'Игровая зона' : language === 'kz' ? 'Ойын аймағы' : 'Game Zone'}
+                        </h3>
+                        <Badge variant="outline" className="text-xs">
+                          {language === 'ru' ? 'Интерактивно' : language === 'kz' ? 'Интерактивті' : 'Interactive'}
+                        </Badge>
+                      </div>
+                      
+                      {/* Interactive area placeholder */}
+                      <div className="parchment-texture rounded-lg p-8 md:p-12 min-h-[400px] md:min-h-[600px] flex flex-col items-center justify-center border-2 border-primary/20">
+                        <div className="text-center space-y-4 max-w-md">
+                          <div className="w-20 h-20 mx-auto bg-primary/10 rounded-full flex items-center justify-center animate-pulse-gold">
+                            <MapPin className="w-10 h-10 text-primary" />
+                          </div>
+                          <h4 className="font-serif text-xl md:text-2xl font-bold text-primary">
+                            {language === 'ru' ? 'Исследуйте древности' : language === 'kz' ? 'Ежелгі заттарды зерттеңіз' : 'Explore Ancient Artifacts'}
+                          </h4>
+                          <p className="text-sm text-muted-foreground leading-relaxed">
+                            {language === 'ru' 
+                              ? 'Введите название региона Казахстана в поле ниже, чтобы указать, где был найден археологический объект' 
+                              : language === 'kz'
+                              ? 'Археологиялық нысан табылған жерді көрсету үшін төмендегі өріске Қазақстан өңірінің атын енгізіңіз'
+                              : 'Enter the name of the Kazakhstan region below to indicate where the archaeological object was found'}
+                          </p>
+                          <div className="flex items-center gap-2 justify-center text-xs text-muted-foreground">
+                            <Sparkles className="w-4 h-4 text-primary" />
+                            <span>{language === 'ru' ? 'Используйте карту для подсказки' : language === 'kz' ? 'Кеңес үшін картаны пайдаланыңыз' : 'Use the map for hints'}</span>
+                          </div>
+                        </div>
+                      </div>
                     </Card>
                   </div>
                 </div>
