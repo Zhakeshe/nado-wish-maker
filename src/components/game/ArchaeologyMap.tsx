@@ -29,8 +29,8 @@ const createCustomIcon = () => {
   });
 };
 
-// Component to handle map effects and initialization
-const MapEffects = ({ onMapReady }: { onMapReady: (map: L.Map) => void }) => {
+// Component to handle map effects
+const MapEffects = () => {
   const map = useMap();
   
   useEffect(() => {
@@ -50,28 +50,19 @@ const MapEffects = ({ onMapReady }: { onMapReady: (map: L.Map) => void }) => {
     `;
     document.head.appendChild(style);
     
-    // Pass map instance to parent
-    onMapReady(map);
-    
     return () => {
       document.head.removeChild(style);
     };
-  }, [map, onMapReady]);
+  }, []);
   
   return null;
 };
 
 export const ArchaeologyMap = ({ onRegionClick, highlightedRegion }: ArchaeologyMapProps) => {
   const [selectedObject, setSelectedObject] = useState<typeof archaeologicalObjects[0] | null>(null);
-  const [map, setMap] = useState<L.Map | null>(null);
 
   const handleMarkerClick = (obj: typeof archaeologicalObjects[0]) => {
     setSelectedObject(obj);
-    if (map) {
-      map.flyTo(obj.coordinates, 7, {
-        duration: 1.5
-      });
-    }
   };
 
   return (
@@ -87,7 +78,7 @@ export const ArchaeologyMap = ({ onRegionClick, highlightedRegion }: Archaeology
           className="w-full h-full"
           zoomControl={true}
         >
-          <MapEffects onMapReady={setMap} />
+          <MapEffects />
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

@@ -1,15 +1,12 @@
 import { useState, useEffect } from "react";
-import { DndProvider } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Trophy, Star, Target, Award, CheckCircle, XCircle, Sparkles } from "lucide-react";
+import { Trophy, Star, Target, Award, CheckCircle, XCircle } from "lucide-react";
 import { ArchaeologyMap } from "@/components/game/ArchaeologyMap";
-import { DraggableObject } from "@/components/game/DraggableObject";
 import { archaeologicalObjects } from "@/data/archaeologicalObjects";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -186,9 +183,8 @@ const Game = () => {
   const t = translations[language];
 
   return (
-    <DndProvider backend={HTML5Backend}>
-      <div className="min-h-screen flex flex-col">
-        <Navigation />
+    <div className="min-h-screen flex flex-col">
+      <Navigation />
         
         <main className="flex-1 pt-20">
           {/* Header */}
@@ -282,7 +278,37 @@ const Game = () => {
                         {language === 'ru' ? 'Объект' : language === 'kz' ? 'Нысан' : 'Object'} {currentObjectIndex + 1}/{archaeologicalObjects.length}
                       </Badge>
                       
-                      <DraggableObject object={currentObject} />
+                      {/* Object Details */}
+                      <div className="p-4 rounded-lg mb-4" style={{
+                        border: '2px solid #D4A574',
+                        background: 'linear-gradient(135deg, rgba(245, 239, 230, 0.9) 0%, rgba(255, 255, 255, 0.9) 100%)',
+                      }}>
+                        <h3 className="font-serif text-lg font-bold mb-2">
+                          {currentObject.name}
+                        </h3>
+                        
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary font-medium">
+                            {currentObject.era}
+                          </span>
+                        </div>
+                        
+                        <p className="text-muted-foreground text-xs leading-relaxed mb-3">
+                          {currentObject.description}
+                        </p>
+                        
+                        <div className="pt-3 border-t border-border/50">
+                          <p className="text-xs text-muted-foreground mb-2">
+                            {language === 'ru' ? 'Выберите регион на карте' : language === 'kz' ? 'Картадан өңірді таңдаңыз' : 'Select region on map'}
+                          </p>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-muted-foreground">
+                              {language === 'ru' ? 'За правильный ответ:' : language === 'kz' ? 'Дұрыс жауап үшін:' : 'For correct answer:'}
+                            </span>
+                            <span className="text-xs font-bold text-primary">+{currentObject.points} {language === 'ru' ? 'поинтов' : language === 'kz' ? 'ұпай' : 'points'}</span>
+                          </div>
+                        </div>
+                      </div>
                       
                       {showResult && (
                         <div className={`mt-6 p-4 rounded-lg ${isCorrect ? 'bg-green-50 border-2 border-green-500' : 'bg-red-50 border-2 border-red-500'}`}>
@@ -368,7 +394,6 @@ const Game = () => {
 
         <Footer />
       </div>
-    </DndProvider>
   );
 };
 
