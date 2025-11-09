@@ -60,12 +60,12 @@ const MapEffects = () => {
 
 export const ArchaeologyMap = ({ onRegionClick, highlightedRegion }: ArchaeologyMapProps) => {
   const [selectedObject, setSelectedObject] = useState<typeof archaeologicalObjects[0] | null>(null);
-  const mapRef = useRef<L.Map | null>(null);
+  const [map, setMap] = useState<L.Map | null>(null);
 
   const handleMarkerClick = (obj: typeof archaeologicalObjects[0]) => {
     setSelectedObject(obj);
-    if (mapRef.current) {
-      mapRef.current.flyTo(obj.coordinates, 7, {
+    if (map) {
+      map.flyTo(obj.coordinates, 7, {
         duration: 1.5
       });
     }
@@ -82,8 +82,8 @@ export const ArchaeologyMap = ({ onRegionClick, highlightedRegion }: Archaeology
           center={[48.0, 67.5]}
           zoom={5}
           className="w-full h-full"
-          ref={mapRef}
           zoomControl={true}
+          ref={setMap}
         >
           <MapEffects />
           <TileLayer
