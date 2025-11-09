@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
 import { archaeologicalObjects } from '@/data/archaeologicalObjects';
 import { Card } from '@/components/ui/card';
 import { X } from 'lucide-react';
@@ -8,100 +8,108 @@ import { X } from 'lucide-react';
 interface ArchaeologyMapProps {
   onRegionClick?: (regionName: string) => void;
   highlightedRegion?: string;
-  mapboxToken: string;
 }
 
-export const ArchaeologyMap = ({ onRegionClick, highlightedRegion, mapboxToken }: ArchaeologyMapProps) => {
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
-  const markers = useRef<mapboxgl.Marker[]>([]);
-  const [selectedObject, setSelectedObject] = useState<typeof archaeologicalObjects[0] | null>(null);
+// Custom marker icon
+const createCustomIcon = () => {
+  return L.divIcon({
+    className: 'custom-marker',
+    html: `<div style="
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background-color: #E33E64;
+      border: 3px solid #FFD166;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(227, 62, 100, 0.4);
+      transition: all 0.3s ease;
+    "></div>`,
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+  });
+};
 
+// Component to handle map effects
+const MapEffects = () => {
+  const map = useMap();
+  
   useEffect(() => {
-    if (!mapContainer.current || !mapboxToken) return;
-
-    mapboxgl.accessToken = mapboxToken;
+    // Add archaeological theme styling
+    const style = document.createElement('style');
+    style.textContent = `
+      .leaflet-tile-container {
+        filter: sepia(0.3) hue-rotate(10deg) saturate(0.8);
+      }
+      .leaflet-container {
+        background: #F5EFE6;
+      }
+      .custom-marker:hover > div {
+        transform: scale(1.2);
+        box-shadow: 0 6px 20px rgba(227, 62, 100, 0.6);
+      }
+    `;
+    document.head.appendChild(style);
     
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/outdoors-v12',
-      center: [67.5, 48.0], // Center of Kazakhstan
-      zoom: 4.5,
-      pitch: 0,
-    });
-
-    // Add navigation controls
-    map.current.addControl(
-      new mapboxgl.NavigationControl({
-        visualizePitch: false,
-      }),
-      'top-right'
-    );
-
-    // Add archaeological sites
-    map.current.on('load', () => {
-      if (!map.current) return;
-
-      // Add custom styling for archaeological theme
-      map.current.setPaintProperty('water', 'fill-color', '#E8D5C4');
-      map.current.setPaintProperty('land', 'background-color', '#F5EFE6');
-
-      // Add markers for each archaeological object
-      archaeologicalObjects.forEach((obj) => {
-        if (!map.current) return;
-
-        // Create custom marker element
-        const el = document.createElement('div');
-        el.className = 'archaeological-marker';
-        el.style.width = '32px';
-        el.style.height = '32px';
-        el.style.borderRadius = '50%';
-        el.style.backgroundColor = '#E33E64';
-        el.style.border = '3px solid #FFD166';
-        el.style.cursor = 'pointer';
-        el.style.boxShadow = '0 4px 12px rgba(227, 62, 100, 0.4)';
-        el.style.transition = 'all 0.3s ease';
-        
-        el.addEventListener('mouseenter', () => {
-          el.style.transform = 'scale(1.2)';
-          el.style.boxShadow = '0 6px 20px rgba(227, 62, 100, 0.6)';
-        });
-        
-        el.addEventListener('mouseleave', () => {
-          el.style.transform = 'scale(1)';
-          el.style.boxShadow = '0 4px 12px rgba(227, 62, 100, 0.4)';
-        });
-
-        const marker = new mapboxgl.Marker(el)
-          .setLngLat(obj.coordinates)
-          .addTo(map.current!);
-
-        el.addEventListener('click', () => {
-          setSelectedObject(obj);
-          map.current?.flyTo({
-            center: obj.coordinates,
-            zoom: 7,
-            duration: 1500
-          });
-        });
-
-        markers.current.push(marker);
-      });
-    });
-
     return () => {
-      markers.current.forEach(marker => marker.remove());
-      map.current?.remove();
+      document.head.removeChild(style);
     };
-  }, [mapboxToken]);
+  }, []);
+  
+  return null;
+};
+
+export const ArchaeologyMap = ({ onRegionClick, highlightedRegion }: ArchaeologyMapProps) => {
+  const [selectedObject, setSelectedObject] = useState<typeof archaeologicalObjects[0] | null>(null);
+  const mapRef = useRef<L.Map | null>(null);
+
+  const handleMarkerClick = (obj: typeof archaeologicalObjects[0]) => {
+    setSelectedObject(obj);
+    if (mapRef.current) {
+      mapRef.current.flyTo(obj.coordinates, 7, {
+        duration: 1.5
+      });
+    }
+  };
 
   return (
     <div className="relative w-full h-full">
-      <div ref={mapContainer} className="absolute inset-0 rounded-lg overflow-hidden" 
+      <div className="absolute inset-0 rounded-lg overflow-hidden" 
            style={{
              border: '3px solid #D4A574',
              boxShadow: '0 8px 24px rgba(212, 165, 116, 0.3), inset 0 0 40px rgba(245, 239, 230, 0.1)'
-           }} />
+           }}>
+        <MapContainer
+          center={[48.0, 67.5]}
+          zoom={5}
+          className="w-full h-full"
+          ref={mapRef}
+          zoomControl={true}
+        >
+          <MapEffects />
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          
+          {archaeologicalObjects.map((obj) => (
+            <Marker
+              key={obj.id}
+              position={obj.coordinates}
+              icon={createCustomIcon()}
+              eventHandlers={{
+                click: () => handleMarkerClick(obj),
+              }}
+            >
+              <Popup>
+                <div className="text-sm">
+                  <h3 className="font-bold">{obj.name}</h3>
+                  <p className="text-xs text-muted-foreground">{obj.era}</p>
+                </div>
+              </Popup>
+            </Marker>
+          ))}
+        </MapContainer>
+      </div>
       
       {/* Archaeological theme overlay */}
       <div className="absolute inset-0 pointer-events-none rounded-lg"
@@ -111,7 +119,7 @@ export const ArchaeologyMap = ({ onRegionClick, highlightedRegion, mapboxToken }
            }} />
 
       {/* Legend */}
-      <div className="absolute bottom-4 left-4 bg-background/95 backdrop-blur-sm p-4 rounded-lg shadow-elegant border border-border">
+      <div className="absolute bottom-4 left-4 bg-background/95 backdrop-blur-sm p-4 rounded-lg shadow-elegant border border-border z-[1000]">
         <div className="text-sm font-semibold mb-2">Легенда</div>
         <div className="flex items-center gap-2 text-xs">
           <div className="w-4 h-4 rounded-full" 
@@ -125,7 +133,7 @@ export const ArchaeologyMap = ({ onRegionClick, highlightedRegion, mapboxToken }
 
       {/* Object Details Card */}
       {selectedObject && (
-        <Card className="absolute top-4 right-4 w-80 p-6 gradient-card shadow-elegant animate-in slide-in-from-right">
+        <Card className="absolute top-4 right-4 w-80 p-6 gradient-card shadow-elegant animate-in slide-in-from-right z-[1000]">
           <button 
             onClick={() => setSelectedObject(null)}
             className="absolute top-2 right-2 p-1 hover:bg-muted rounded-full transition-colors"

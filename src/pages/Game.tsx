@@ -16,7 +16,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const Game = () => {
-  const [mapboxToken, setMapboxToken] = useState("");
   const [currentObjectIndex, setCurrentObjectIndex] = useState(0);
   const [selectedRegion, setSelectedRegion] = useState("");
   const [score, setScore] = useState(0);
@@ -147,9 +146,6 @@ const Game = () => {
       step2: "Выберите правильный регион на карте",
       step3: "За правильный ответ получите поинты",
       step4: "Узнайте исторические факты после ответа",
-      needToken: "Введите Mapbox токен",
-      tokenPlaceholder: "pk.eyJ1...",
-      tokenButton: "Начать игру",
     },
     kz: {
       title: "Археологиялық ойын",
@@ -167,9 +163,6 @@ const Game = () => {
       step2: "Картадан дұрыс өңірді таңдаңыз",
       step3: "Дұрыс жауап үшін ұпай алыңыз",
       step4: "Жауаптан кейін тарихи фактілерді біліңіз",
-      needToken: "Mapbox токенін енгізіңіз",
-      tokenPlaceholder: "pk.eyJ1...",
-      tokenButton: "Ойынды бастау",
     },
     en: {
       title: "Archaeological Game",
@@ -187,55 +180,10 @@ const Game = () => {
       step2: "Select the correct region on the map",
       step3: "Get points for correct answer",
       step4: "Learn historical facts after answering",
-      needToken: "Enter Mapbox token",
-      tokenPlaceholder: "pk.eyJ1...",
-      tokenButton: "Start game",
     }
   };
 
   const t = translations[language];
-
-  if (!mapboxToken) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Navigation />
-        <main className="flex-1 pt-20 flex items-center justify-center">
-          <Card className="p-8 max-w-md w-full gradient-card shadow-elegant">
-            <div className="text-center mb-6">
-              <Sparkles className="w-16 h-16 text-primary mx-auto mb-4" />
-              <h2 className="font-serif text-2xl font-bold mb-2">{t.needToken}</h2>
-              <p className="text-sm text-muted-foreground">
-                Получите бесплатный токен на{" "}
-                <a href="https://mapbox.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                  mapbox.com
-                </a>
-              </p>
-            </div>
-            <div className="space-y-4">
-              <Input
-                type="text"
-                placeholder={t.tokenPlaceholder}
-                value={mapboxToken}
-                onChange={(e) => setMapboxToken(e.target.value)}
-                className="font-mono text-sm"
-              />
-              <Button
-                onClick={() => mapboxToken && toast({
-                  title: language === 'ru' ? "Токен сохранён" : language === 'kz' ? "Токен сақталды" : "Token saved",
-                  description: language === 'ru' ? "Начинаем игру..." : language === 'kz' ? "Ойынды бастаймыз..." : "Starting game...",
-                })}
-                disabled={!mapboxToken}
-                className="w-full"
-              >
-                {t.tokenButton}
-              </Button>
-            </div>
-          </Card>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
 
   return (
     <DndProvider backend={HTML5Backend}>
@@ -375,7 +323,6 @@ const Game = () => {
                   <div className="lg:col-span-2">
                     <Card className="p-2 gradient-card shadow-elegant" style={{ height: '700px' }}>
                       <ArchaeologyMap 
-                        mapboxToken={mapboxToken}
                         onRegionClick={setSelectedRegion}
                         highlightedRegion={selectedRegion}
                       />
