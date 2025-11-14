@@ -24,7 +24,7 @@ serve(async (req) => {
       const { taskId } = await req.json();
       console.log('Checking status for task:', taskId);
 
-      const statusResponse = await fetch(`https://api.meshy.ai/openapi/v2/image-to-3d/${taskId}`, {
+      const statusResponse = await fetch(`https://api.meshy.ai/v2/image-to-3d/${taskId}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${meshyApiKey}`,
@@ -59,9 +59,10 @@ serve(async (req) => {
     const meshyFormData = new FormData();
     meshyFormData.append('image_file', imageFile);
     meshyFormData.append('enable_pbr', 'true');
-    meshyFormData.append('topology', 'quad');
+    meshyFormData.append('topology', 'triangular');
+    meshyFormData.append('ai_model', 'meshy-4');
 
-    const createResponse = await fetch('https://api.meshy.ai/openapi/v2/image-to-3d', {
+    const createResponse = await fetch('https://api.meshy.ai/v2/image-to-3d', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${meshyApiKey}`,
