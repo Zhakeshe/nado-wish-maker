@@ -33,11 +33,18 @@ serve(async (req) => {
           },
         });
 
-        if (!statusResponse.ok) {
-          const errorText = await statusResponse.text();
-          console.error('Meshy API status error:', statusResponse.status, errorText);
-          throw new Error(`Meshy API error: ${statusResponse.status}`);
+      if (!statusResponse.ok) {
+        const errorText = await statusResponse.text();
+        console.error('Meshy API status error:', statusResponse.status, errorText);
+        
+        if (statusResponse.status === 402) {
+          throw new Error('Meshy API credits depleted. Please add credits to your Meshy account.');
+        } else if (statusResponse.status === 401) {
+          throw new Error('Invalid Meshy API key. Please check your configuration.');
         }
+        
+        throw new Error(`Meshy API error: ${statusResponse.status}`);
+      }
 
         const statusData = await statusResponse.json();
         console.log('Task status:', statusData);
@@ -96,6 +103,16 @@ serve(async (req) => {
     if (!createResponse.ok) {
       const errorText = await createResponse.text();
       console.error('Meshy API create error:', createResponse.status, errorText);
+      
+      // Provide user-friendly error messages
+      if (createResponse.status === 402) {
+        throw new Error('Meshy API credits depleted. Please add credits to your Meshy account.');
+      } else if (createResponse.status === 401) {
+        throw new Error('Invalid Meshy API key. Please check your configuration.');
+      } else if (createResponse.status === 429) {
+        throw new Error('Rate limit exceeded. Please try again in a few moments.');
+      }
+      
       throw new Error(`Meshy API error: ${createResponse.status}`);
     }
 
