@@ -35,7 +35,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/viewer/:id?" element={<Viewer />} />
-            <Route path="/image-to-3d" element={<ImageTo3D />} />
+            <Route path="/3d-generator" element={<ImageTo3D />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

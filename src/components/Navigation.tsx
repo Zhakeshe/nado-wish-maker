@@ -30,7 +30,7 @@ const translations: Record<Language, Translations> = {
     about: "О нас",
     news: "Новости",
     map: "Карта",
-    imageTo3D: "Фото → 3D",
+    imageTo3D: "3D Generator",
     login: "Войти",
   },
   kz: {
@@ -40,7 +40,7 @@ const translations: Record<Language, Translations> = {
     about: "Біз туралы",
     news: "Жаңалықтар",
     map: "Карта",
-    imageTo3D: "Фото → 3D",
+    imageTo3D: "3D Generator",
     login: "Кіру",
   },
   en: {
@@ -50,7 +50,7 @@ const translations: Record<Language, Translations> = {
     about: "About Us",
     news: "News",
     map: "Map",
-    imageTo3D: "Photo → 3D",
+    imageTo3D: "3D Generator",
     login: "Login",
   },
 };
@@ -130,7 +130,7 @@ export const Navigation = () => {
               {t.map}
             </Link>
             <Link
-              to="/image-to-3d"
+              to="/3d-generator"
               className="text-foreground hover:text-primary transition-smooth font-medium"
             >
               {t.imageTo3D}
@@ -226,7 +226,7 @@ export const Navigation = () => {
               {t.map}
             </Link>
             <Link
-              to="/image-to-3d"
+              to="/3d-generator"
               className="block text-foreground hover:text-primary transition-smooth font-medium"
               onClick={() => setIsOpen(false)}
             >
