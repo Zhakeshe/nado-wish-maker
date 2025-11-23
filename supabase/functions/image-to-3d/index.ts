@@ -60,9 +60,19 @@ serve(async (req) => {
 
     console.log('Creating 3D generation task for image:', imageFile.name);
 
-    // Convert image to base64 data URI
+    // Convert image to base64 data URI using chunks to avoid stack overflow
     const arrayBuffer = await imageFile.arrayBuffer();
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+    const uint8Array = new Uint8Array(arrayBuffer);
+    
+    // Convert to base64 in chunks to avoid Maximum call stack size exceeded
+    let binary = '';
+    const chunkSize = 0x8000; // 32KB chunks
+    for (let i = 0; i < uint8Array.length; i += chunkSize) {
+      const chunk = uint8Array.subarray(i, Math.min(i + chunkSize, uint8Array.length));
+      binary += String.fromCharCode(...chunk);
+    }
+    const base64 = btoa(binary);
+    
     const mimeType = imageFile.type || 'image/jpeg';
     const dataUri = `data:${mimeType};base64,${base64}`;
 
