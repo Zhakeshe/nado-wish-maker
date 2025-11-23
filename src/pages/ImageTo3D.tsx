@@ -53,17 +53,17 @@ export default function ImageTo3D() {
       if (taskData.status === "SUCCEEDED" && taskData.model_urls?.glb) {
         setModelUrl(taskData.model_urls.glb);
         setIsProcessing(false);
-        toast({
-          title: "Готово!",
-          description: "3D-модель успешно создана",
-        });
+      toast({
+        title: "Success!",
+        description: "3D model generated successfully",
+      });
       } else if (taskData.status === "FAILED") {
         setIsProcessing(false);
-        toast({
-          title: "Ошибка",
-          description: "Не удалось создать 3D-модель",
-          variant: "destructive",
-        });
+      toast({
+        title: "Error",
+        description: "Failed to generate 3D model",
+        variant: "destructive",
+      });
       } else {
         // Continue polling
         setTimeout(() => checkTaskStatus(taskId), 5000);
@@ -72,8 +72,8 @@ export default function ImageTo3D() {
       console.error("Error checking task status:", error);
       setIsProcessing(false);
       toast({
-        title: "Ошибка",
-        description: "Не удалось проверить статус обработки",
+        title: "Error",
+        description: "Failed to check processing status",
         variant: "destructive",
       });
     }
@@ -99,8 +99,8 @@ export default function ImageTo3D() {
       setTaskData(taskData);
 
       toast({
-        title: "Обработка началась",
-        description: "Обрабатываем фото... это займет 20–60 секунд",
+        title: "Processing Started",
+        description: "Generating 3D model... This will take 20–40 seconds",
       });
 
       // Start polling for status
@@ -110,8 +110,8 @@ export default function ImageTo3D() {
       console.error("Error converting image:", error);
       setIsProcessing(false);
       toast({
-        title: "Ошибка",
-        description: "Не удалось начать обработку изображения",
+        title: "Error",
+        description: "Failed to start image processing",
         variant: "destructive",
       });
     }
@@ -133,10 +133,10 @@ export default function ImageTo3D() {
       <div className="container mx-auto px-4 py-12">
         <div className="text-center mb-12 animate-fade-in">
           <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-archaeology bg-clip-text text-transparent">
-            Фото → 3D-модель
+            3D Model Generator
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Загрузите фотографию, и мы создадим для вас интерактивную 3D-модель
+            Upload your photo and AI will generate an interactive 3D model in 20-40 seconds
           </p>
         </div>
 
@@ -166,7 +166,7 @@ export default function ImageTo3D() {
                       className="absolute top-2 right-2 shadow-lg"
                       onClick={() => fileInputRef.current?.click()}
                     >
-                      Изменить
+                      Change
                     </Button>
                   </div>
                 ) : (
@@ -178,8 +178,8 @@ export default function ImageTo3D() {
                   >
                     <div className="flex flex-col items-center gap-4">
                       <Upload className="w-16 h-16 animate-pulse" />
-                      <span className="text-lg font-medium">Загрузить фото</span>
-                      <span className="text-sm text-muted-foreground">PNG, JPG до 10MB</span>
+                      <span className="text-lg font-medium">Upload Photo</span>
+                      <span className="text-sm text-muted-foreground">JPG, JPEG, PNG (max 10MB)</span>
                     </div>
                   </Button>
                 )}
@@ -195,10 +195,10 @@ export default function ImageTo3D() {
                   {isProcessing ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Обработка...
+                      Processing...
                     </>
                   ) : (
-                    "Создать 3D-модель"
+                    "Generate 3D Model"
                   )}
                 </Button>
               )}
@@ -214,7 +214,7 @@ export default function ImageTo3D() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-base font-medium">
-                    Статус: {taskData.status === "PENDING" ? "В очереди..." : "Создаём 3D-модель..."}
+                    Status: {taskData.status === "PENDING" ? "In queue..." : "Generating 3D model..."}
                   </span>
                   <span className="text-base font-bold text-primary">
                     {taskData.progress || 0}%
@@ -223,10 +223,10 @@ export default function ImageTo3D() {
                 <Progress value={taskData.progress || 0} className="h-3" />
                 <div className="text-center space-y-2">
                   <p className="text-base font-medium text-primary">
-                    Обрабатываем фото...
+                    AI is generating your 3D model
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Это займет 20–60 секунд
+                    This may take up to 20–40 seconds...
                   </p>
                 </div>
               </div>
@@ -239,18 +239,18 @@ export default function ImageTo3D() {
               <div className="space-y-6">
                 <div className="text-center space-y-2">
                   <h2 className="text-3xl font-bold bg-gradient-archaeology bg-clip-text text-transparent">
-                    Ваша 3D-модель готова! 🎉
+                    Your 3D Model is Ready! 🎉
                   </h2>
                   <p className="text-muted-foreground">
-                    Вращайте и масштабируйте модель для детального просмотра
+                    Rotate and zoom to explore your model in detail
                   </p>
                 </div>
                 
                 <div className="w-full h-[500px] rounded-lg overflow-hidden bg-gradient-to-br from-background to-muted shadow-soft border border-primary/10">
                   <Viewer3D
                     modelUrl={modelUrl}
-                    title="Сгенерированная 3D-модель"
-                    description="Используйте мышь для взаимодействия с моделью"
+                    title="Generated 3D Model"
+                    description="Use mouse to interact with the model"
                     showBackground={false}
                   />
                 </div>
@@ -262,7 +262,7 @@ export default function ImageTo3D() {
                     className="flex-1 shadow-elegant"
                   >
                     <Download className="mr-2 h-5 w-5" />
-                    Скачать 3D-модель
+                    Download 3D Model (.glb)
                   </Button>
                   <Button
                     size="lg"
@@ -275,7 +275,7 @@ export default function ImageTo3D() {
                     }}
                     className="flex-1"
                   >
-                    Создать новую
+                    Create New
                   </Button>
                 </div>
               </div>
