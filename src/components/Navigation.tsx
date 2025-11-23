@@ -18,7 +18,7 @@ interface Translations {
   about: string;
   news: string;
   map: string;
-  imageTo3D: string;
+  upload3D: string;
   login: string;
 }
 
@@ -30,7 +30,7 @@ const translations: Record<Language, Translations> = {
     about: "О нас",
     news: "Новости",
     map: "Карта",
-    imageTo3D: "3D Generator",
+    upload3D: "Загрузить 3D",
     login: "Войти",
   },
   kz: {
@@ -40,7 +40,7 @@ const translations: Record<Language, Translations> = {
     about: "Біз туралы",
     news: "Жаңалықтар",
     map: "Карта",
-    imageTo3D: "3D Generator",
+    upload3D: "3D жүктеу",
     login: "Кіру",
   },
   en: {
@@ -50,7 +50,7 @@ const translations: Record<Language, Translations> = {
     about: "About Us",
     news: "News",
     map: "Map",
-    imageTo3D: "3D Generator",
+    upload3D: "Upload 3D",
     login: "Login",
   },
 };
@@ -130,10 +130,10 @@ export const Navigation = () => {
               {t.map}
             </Link>
             <Link
-              to="/3d-generator"
+              to="/upload-3d"
               className="text-foreground hover:text-primary transition-smooth font-medium"
             >
-              {t.imageTo3D}
+              {t.upload3D}
             </Link>
 
             {/* Language Switcher */}
@@ -226,11 +226,11 @@ export const Navigation = () => {
               {t.map}
             </Link>
             <Link
-              to="/3d-generator"
+              to="/upload-3d"
               className="block text-foreground hover:text-primary transition-smooth font-medium"
               onClick={() => setIsOpen(false)}
             >
-              {t.imageTo3D}
+              {t.upload3D}
             </Link>
 
             <DropdownMenu>

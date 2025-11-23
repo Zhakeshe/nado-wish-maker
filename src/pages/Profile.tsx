@@ -10,7 +10,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase, signOut } from "@/lib/supabase";
-import { Trophy, Upload, Award, History } from "lucide-react";
+import { Trophy, Upload, Award, History, Eye, Download } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Viewer3D } from "@/components/Viewer3D";
 
 interface Profile {
   full_name: string | null;
@@ -21,6 +23,8 @@ interface Profile {
 interface UserObject {
   id: string;
   title: string;
+  description: string | null;
+  model_url: string | null;
   status: string;
   created_at: string;
 }
@@ -93,7 +97,7 @@ const Profile = () => {
       // Fetch user's uploaded objects
       const { data: objectsData } = await supabase
         .from("objects_3d")
-        .select("id, title, status, created_at")
+        .select("id, title, description, model_url, status, created_at")
         .eq("author_id", userId)
         .order("created_at", { ascending: false });
 
@@ -232,40 +236,83 @@ const Profile = () => {
               <TabsContent value="objects" className="space-y-4">
                 {userObjects.length === 0 ? (
                   <Card>
-                    <CardContent className="py-8 text-center text-muted-foreground">
-                      <Upload className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <CardContent className="py-8 text-center text-muted-foreground space-y-4">
+                      <Upload className="w-12 h-12 mx-auto opacity-50" />
                       <p>Вы ещё не загрузили ни одного объекта</p>
-                      <Button className="mt-4" onClick={() => navigate("/projects")}>
-                        Добавить первый объект
+                      <Button onClick={() => navigate("/upload-3d")}>
+                        Загрузить 3D объект
                       </Button>
                     </CardContent>
                   </Card>
                 ) : (
-                  userObjects.map(obj => (
-                    <Card key={obj.id}>
-                      <CardHeader>
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <CardTitle className="text-lg">{obj.title}</CardTitle>
-                            <CardDescription>
-                              {new Date(obj.created_at).toLocaleDateString("ru-RU")}
-                            </CardDescription>
+                  <>
+                    <div className="flex justify-end mb-4">
+                      <Button onClick={() => navigate("/upload-3d")}>
+                        <Upload className="w-4 h-4 mr-2" />
+                        Новый объект
+                      </Button>
+                    </div>
+                    {userObjects.map(obj => (
+                      <Card key={obj.id}>
+                        <CardHeader>
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <CardTitle className="text-lg">{obj.title}</CardTitle>
+                              {obj.description && (
+                                <p className="text-sm text-muted-foreground mt-1">{obj.description}</p>
+                              )}
+                              <CardDescription className="mt-2">
+                                {new Date(obj.created_at).toLocaleDateString("ru-RU")}
+                              </CardDescription>
+                            </div>
+                            <Badge 
+                              variant={
+                                obj.status === "approved" ? "default" : 
+                                obj.status === "rejected" ? "destructive" : 
+                                "secondary"
+                              }
+                            >
+                              {obj.status === "approved" ? "Одобрено" : 
+                               obj.status === "rejected" ? "Отклонено" : 
+                               "На модерации"}
+                            </Badge>
                           </div>
-                          <Badge 
-                            variant={
-                              obj.status === "approved" ? "default" : 
-                              obj.status === "rejected" ? "destructive" : 
-                              "secondary"
-                            }
-                          >
-                            {obj.status === "approved" ? "Одобрено" : 
-                             obj.status === "rejected" ? "Отклонено" : 
-                             "На модерации"}
-                          </Badge>
-                        </div>
-                      </CardHeader>
-                    </Card>
-                  ))
+                        </CardHeader>
+                        {obj.model_url && (
+                          <CardContent className="flex gap-2">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button variant="outline" size="sm">
+                                  <Eye className="mr-2 h-4 w-4" />
+                                  Просмотр
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-4xl max-h-[90vh]">
+                                <DialogHeader>
+                                  <DialogTitle>{obj.title}</DialogTitle>
+                                </DialogHeader>
+                                <div className="overflow-auto">
+                                  <Viewer3D
+                                    modelUrl={obj.model_url}
+                                    title={obj.title}
+                                    description={obj.description || undefined}
+                                  />
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.open(obj.model_url!, '_blank')}
+                            >
+                              <Download className="mr-2 h-4 w-4" />
+                              Скачать
+                            </Button>
+                          </CardContent>
+                        )}
+                      </Card>
+                    ))}
+                  </>
                 )}
               </TabsContent>
 
