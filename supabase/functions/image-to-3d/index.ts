@@ -16,36 +16,41 @@ serve(async (req) => {
       throw new Error('MESHY_API_KEY is not configured');
     }
 
-    const url = new URL(req.url);
-    const action = url.searchParams.get('action');
+    const contentType = req.headers.get('content-type') || '';
+    
+    // Check task status (JSON request with taskId)
+    if (contentType.includes('application/json')) {
+      const body = await req.json();
+      
+      if (body.taskId) {
+        const taskId = body.taskId;
+        console.log('Checking status for task:', taskId);
 
-    // Check task status
-    if (action === 'status') {
-      const { taskId } = await req.json();
-      console.log('Checking status for task:', taskId);
+        const statusResponse = await fetch(`https://api.meshy.ai/openapi/v1/image-to-3d/${taskId}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${meshyApiKey}`,
+          },
+        });
 
-      const statusResponse = await fetch(`https://api.meshy.ai/v2/image-to-3d/${taskId}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${meshyApiKey}`,
-        },
-      });
+        if (!statusResponse.ok) {
+          const errorText = await statusResponse.text();
+          console.error('Meshy API status error:', statusResponse.status, errorText);
+          throw new Error(`Meshy API error: ${statusResponse.status}`);
+        }
 
-      if (!statusResponse.ok) {
-        const errorText = await statusResponse.text();
-        console.error('Meshy API status error:', statusResponse.status, errorText);
-        throw new Error(`Meshy API error: ${statusResponse.status}`);
+        const statusData = await statusResponse.json();
+        console.log('Task status:', statusData);
+
+        return new Response(JSON.stringify(statusData), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
-
-      const statusData = await statusResponse.json();
-      console.log('Task status:', statusData);
-
-      return new Response(JSON.stringify(statusData), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      
+      throw new Error('Invalid JSON request: taskId is required');
     }
 
-    // Create new 3D generation task
+    // Create new 3D generation task (FormData request with image)
     const formData = await req.formData();
     const imageFile = formData.get('image') as File;
 
@@ -55,19 +60,27 @@ serve(async (req) => {
 
     console.log('Creating 3D generation task for image:', imageFile.name);
 
-    // Create FormData for Meshy API
-    const meshyFormData = new FormData();
-    meshyFormData.append('image_file', imageFile);
-    meshyFormData.append('enable_pbr', 'true');
-    meshyFormData.append('topology', 'triangular');
-    meshyFormData.append('ai_model', 'meshy-4');
+    // Convert image to base64 data URI
+    const arrayBuffer = await imageFile.arrayBuffer();
+    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+    const mimeType = imageFile.type || 'image/jpeg';
+    const dataUri = `data:${mimeType};base64,${base64}`;
 
-    const createResponse = await fetch('https://api.meshy.ai/v2/image-to-3d', {
+    // Create request body for Meshy API
+    const requestBody = {
+      image_url: dataUri,
+      enable_pbr: true,
+      topology: 'triangle',
+      ai_model: 'meshy-4',
+    };
+
+    const createResponse = await fetch('https://api.meshy.ai/openapi/v1/image-to-3d', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${meshyApiKey}`,
+        'Content-Type': 'application/json',
       },
-      body: meshyFormData,
+      body: JSON.stringify(requestBody),
     });
 
     if (!createResponse.ok) {
