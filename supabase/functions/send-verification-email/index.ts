@@ -1,7 +1,17 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "https://esm.sh/resend@4.0.0";
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const smtpClient = new SMTPClient({
+  connection: {
+    hostname: Deno.env.get("SMTP_HOST") || "",
+    port: parseInt(Deno.env.get("SMTP_PORT") || "465"),
+    tls: true,
+    auth: {
+      username: Deno.env.get("SMTP_USERNAME") || "",
+      password: Deno.env.get("SMTP_PASSWORD") || "",
+    },
+  },
+});
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -23,10 +33,11 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Sending verification code to ${email}`);
 
-    const emailResponse = await resend.emails.send({
-      from: "TENGIR <noreply@mydomain.kz>",
-      to: [email],
+    await smtpClient.send({
+      from: Deno.env.get("SMTP_FROM_EMAIL") || "no-reply@museonet.world",
+      to: email,
       subject: "Верификациялық код / Verification Code",
+      content: "auto",
       html: `
         <!DOCTYPE html>
         <html>
@@ -150,12 +161,9 @@ const handler = async (req: Request): Promise<Response> => {
       `,
     });
 
-    if (emailResponse.error) {
-      console.error("Resend error:", emailResponse.error);
-      throw emailResponse.error;
-    }
+    await smtpClient.close();
 
-    console.log("Email sent successfully:", emailResponse.data);
+    console.log("Email sent successfully via SMTP");
 
     return new Response(
       JSON.stringify({ success: true, message: "Verification email sent" }),
