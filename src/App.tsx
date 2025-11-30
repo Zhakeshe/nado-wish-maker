@@ -15,6 +15,8 @@ import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import Viewer from "./pages/Viewer";
 import Upload3D from "./pages/Upload3D";
+import VerifyEmail from "./pages/VerifyEmail";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -27,15 +29,19 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/projects" element={<Projects />} />
-            <Route path="/game" element={<Game />} />
             <Route path="/about" element={<About />} />
             <Route path="/news" element={<News />} />
-            <Route path="/map" element={<Map />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/viewer/:id?" element={<Viewer />} />
-            <Route path="/upload-3d" element={<Upload3D />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
+            
+            {/* Protected Routes - Require Email Verification */}
+            <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
+            <Route path="/game" element={<ProtectedRoute><Game /></ProtectedRoute>} />
+            <Route path="/map" element={<ProtectedRoute><Map /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="/viewer/:id?" element={<ProtectedRoute><Viewer /></ProtectedRoute>} />
+            <Route path="/upload-3d" element={<ProtectedRoute><Upload3D /></ProtectedRoute>} />
+            
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
