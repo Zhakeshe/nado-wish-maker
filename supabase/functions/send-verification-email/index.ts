@@ -1,77 +1,121 @@
-<!DOCTYPE html>
-<html>
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { SMTPHandler } from "https://deno.land/x/denomailer@1.6.0/client/mod.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+interface VerificationPayload {
+  email: string;
+  code: string;
+}
+
+// Create a single SMTP client instance reused across invocations
+const smtpClient = new SMTPHandler({
+  connection: {
+    hostname: Deno.env.get("SMTP_HOST") ?? "mail.spacemail.com",
+    port: Number(Deno.env.get("SMTP_PORT") ?? "465"),
+    tls: true,
+    auth: {
+      username: Deno.env.get("SMTP_USERNAME") ?? "",
+      password: Deno.env.get("SMTP_PASSWORD") ?? "",
+    },
+  },
+  debug: {
+    log: true,
+    allowUnsecure: false,
+    encodeLB: false,
+    noStartTLS: false,
+  },
+});
+
+const buildPlainTextBody = (code: string): string => {
+  return [
+    "Сәлеметсіз бе!",
+    "",
+    "MuseoNet жүйесіне тіркелуді растау үшін төмендегі кодты қолданыңыз:",
+    "",
+    `Код: ${code}`,
+    "",
+    "Бұл код 5 минут ішінде жарамды.",
+    "Егер сіз MuseoNet сайтында тіркелуді бастамаған болсаңыз, бұл хатты елемеуге болады.",
+    "",
+    "Құрметпен,",
+    "MuseoNet командасы",
+  ].join("\n");
+};
+
+const buildHtmlBody = (code: string): string => {
+  return `<!DOCTYPE html>
+<html lang="kk">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <style>
-      body {
-        margin: 0;
-        padding: 0;
-        background: #f4f4f7;
-        font-family: Arial, sans-serif;
-      }
-      .container {
-        max-width: 580px;
-        margin: 30px auto;
-        background: #ffffff;
-        border-radius: 12px;
-        padding: 30px;
-        border: 1px solid #e2e2e2;
-      }
-      h1 {
-        font-size: 22px;
-        color: #333333;
-        margin-top: 0;
-        text-align: center;
-      }
-      p {
-        font-size: 15px;
-        color: #444444;
-        line-height: 1.5;
-      }
-      .code-box {
-        margin: 25px 0;
-        padding: 18px;
-        background: #f9f9fb;
-        border: 1px solid #d8d8dd;
-        border-radius: 8px;
-        text-align: center;
-      }
-      .code {
-        font-size: 36px;
-        letter-spacing: 6px;
-        font-weight: bold;
-        color: #d9374a;
-        font-family: "Courier New", monospace;
-      }
-      .footer {
-        margin-top: 30px;
-        font-size: 12px;
-        color: #888888;
-        text-align: center;
-      }
-    </style>
+    <meta charset="UTF-8" />
+    <title>MuseoNet – email растау коды</title>
   </head>
   <body>
-    <div class="container">
-      <h1>Museonet — Email верификация</h1>
-
-      <p>Сәлеметсіз бе! Тіркелуді аяқтау үшін төмендегі верификация кодын енгізіңіз.</p>
-
-      <div class="code-box">
-        <div class="code">${code}</div>
-      </div>
-
-      <p>Бұл код <strong>5 минут</strong> ішінде жарамды.</p>
-
-      <p style="font-size: 13px; color: #666;">
-        Егер бұл әрекетті сіз жасамаған болсаңыз, хатты елемей-ақ қойыңыз.
-      </p>
-
-      <div class="footer">
-        © 2025 TENGIR / MuseoNet<br />
-        Ақтау, Қазақстан
-      </div>
-    </div>
+    <p>Сәлеметсіз бе!</p>
+    <p>MuseoNet жүйесіне тіркелуді растау үшін төмендегі кодты қолданыңыз:</p>
+    <p><strong>Код: ${code}</strong></p>
+    <p>Бұл код 5 минут ішінде жарамды.</p>
+    <p>Егер сіз MuseoNet сайтында тіркелуді бастамаған болсаңыз, бұл хатты елемеуге болады.</p>
+    <p>Құрметпен,<br />MuseoNet командасы</p>
   </body>
-</html>
+</html>`;
+};
+
+serve(async (req: Request): Promise<Response> => {
+  // Handle CORS preflight
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    if (req.method !== "POST") {
+      return new Response(JSON.stringify({ error: "Method not allowed" }), {
+        status: 405,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    const { email, code } = (await req.json()) as VerificationPayload;
+
+    if (!email || !code) {
+      return new Response(JSON.stringify({ error: "Missing email or code" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    const fromEmail = Deno.env.get("SMTP_FROM_EMAIL") ?? "no-reply@museonet.world";
+    const from = `MuseoNet <${fromEmail}>`;
+
+    console.log(`[SMTP] Sending verification code to ${email} from ${from}`);
+
+    await smtpClient.send({
+      from,
+      to: email,
+      subject: "MuseoNet – email растау коды",
+      content: buildPlainTextBody(code),
+      html: buildHtmlBody(code),
+      priority: "normal",
+    });
+
+    console.log("[SMTP] Email sent successfully via SMTP");
+
+    return new Response(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
+  } catch (error: any) {
+    console.error("Error in send-verification-email function:", error);
+
+    return new Response(
+      JSON.stringify({ error: error?.message ?? String(error) }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      },
+    );
+  }
+});
