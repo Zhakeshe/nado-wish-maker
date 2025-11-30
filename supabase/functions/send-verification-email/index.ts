@@ -31,10 +31,11 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const { email, code }: VerificationEmailRequest = await req.json();
 
-    console.log(`Sending verification code to ${email}`);
+    const fromEmail = Deno.env.get("SMTP_FROM_EMAIL") || "no-reply@museonet.world";
+    console.log(`Sending verification code to ${email} from ${fromEmail}`);
 
     await smtpClient.send({
-      from: Deno.env.get("SMTP_FROM_EMAIL") || "no-reply@museonet.world",
+      from: fromEmail,
       to: email,
       subject: "Верификациялық код / Verification Code",
       html: `
