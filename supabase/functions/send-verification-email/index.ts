@@ -152,7 +152,7 @@ const handler = async (req: Request): Promise<Response> => {
               </div>
               
               <div class="footer">
-                <p>© 2024 TENGIR / MuseoNet. Барлық құқықтар қорғалған.</p>
+                <p>© 2025 TENGIR / MuseoNet. Барлық құқықтар қорғалған.</p>
                 <p>Ақтау, Қазақстан | +7 700 255 18 36</p>
               </div>
             </div>
@@ -165,22 +165,16 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Email sent successfully via SMTP");
 
-    return new Response(
-      JSON.stringify({ success: true, message: "Verification email sent" }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
-    );
+    return new Response(JSON.stringify({ success: true, message: "Verification email sent" }), {
+      status: 200,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
   } catch (error: any) {
     console.error("Error in send-verification-email function:", error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
-    );
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
   }
 };
 
