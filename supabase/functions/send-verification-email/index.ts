@@ -37,7 +37,6 @@ const handler = async (req: Request): Promise<Response> => {
       from: Deno.env.get("SMTP_FROM_EMAIL") || "no-reply@museonet.world",
       to: email,
       subject: "Верификациялық код / Verification Code",
-      content: "auto",
       html: `
         <!DOCTYPE html>
         <html>
