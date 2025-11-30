@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,86 +9,172 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import backgroundImage from "@/assets/background-petroglyphs.png";
 
-const RESEND_SECONDS = 60;
-
 const Auth = () => {
   const [email, setEmail] = useState("");
-  const [code, setCode] = useState("");
+  const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [mode, setMode] = useState<"signin" | "signup">("signin");
-  const [isSending, setIsSending] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [secondsLeft, setSecondsLeft] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  const isCodeDisabled = useMemo(() => isSending || secondsLeft > 0 || !email, [isSending, secondsLeft, email]);
-
-  useEffect(() => {
-    let timer: number | undefined;
-    if (secondsLeft > 0) {
-      timer = window.setTimeout(() => setSecondsLeft((prev) => prev - 1), 1000);
-    }
-    return () => {
-      if (timer) {
-        window.clearTimeout(timer);
-      }
-    };
-  }, [secondsLeft]);
 
   useEffect(() => {
     const checkUser = async () => {
       const { data } = await supabase.auth.getUser();
-      if (data.user) navigate("/");
+      if (data.user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("is_verified")
+          .eq("user_id", data.user.id)
+          .single();
+
+        if (profile?.is_verified) {
+          navigate("/");
+        } else {
+          navigate("/verify-email");
+        }
+      }
     };
     checkUser();
   }, [navigate]);
 
-  const sendCode = async () => {
-    if (!email.includes("@")) {
-      toast({ variant: "destructive", title: "Email", description: "Дұрыс email енгізіңіз" });
+  const handleSignup = async () => {
+    if (!email.includes("@") || !fullName.trim() || password.length < 6) {
+      toast({
+        variant: "destructive",
+        title: "Қате",
+        description: "Барлық өрістерді дұрыс толтырыңыз (пароль ең кем 6 таңба)",
+      });
       return;
     }
-    setIsSending(true);
-    const { error } = await supabase.auth.signInWithOtp({
+
+    setIsLoading(true);
+
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
+      password,
       options: {
-        shouldCreateUser: mode === "signup",
         data: { full_name: fullName },
-        emailRedirectTo: `${window.location.origin}/auth`,
+        emailRedirectTo: `${window.location.origin}/verify-email`,
       },
     });
-    setIsSending(false);
 
-    if (error) {
-      toast({ variant: "destructive", title: "Код жіберілмеді", description: error.message });
+    if (authError) {
+      toast({
+        variant: "destructive",
+        title: "Тіркелу сәтсіз",
+        description: authError.message,
+      });
+      setIsLoading(false);
       return;
     }
 
-    setSecondsLeft(RESEND_SECONDS);
-    toast({ title: "Код жіберілді", description: "Поштаны тексеріп, 6-сандық кодты енгізіңіз" });
+    if (!authData.user) {
+      toast({
+        variant: "destructive",
+        title: "Қате",
+        description: "Пайдаланушы жасалмады",
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .update({
+        verification_code: verificationCode,
+        code_expires_at: expiresAt.toISOString(),
+        last_resend_at: new Date().toISOString(),
+        is_verified: false,
+      })
+      .eq("user_id", authData.user.id);
+
+    if (profileError) {
+      console.error("Profile update error:", profileError);
+    }
+
+    const { error: emailError } = await supabase.functions.invoke("send-verification-email", {
+      body: { email, code: verificationCode },
+    });
+
+    setIsLoading(false);
+
+    if (emailError) {
+      toast({
+        variant: "destructive",
+        title: "Email жіберілмеді",
+        description: emailError.message,
+      });
+      return;
+    }
+
+    toast({
+      title: "Тіркелу сәтті!",
+      description: "Верификациялық код поштаңызға жіберілді",
+    });
+
+    navigate("/verify-email");
   };
 
-  const verifyCode = async () => {
-    if (code.length !== 6) {
-      toast({ variant: "destructive", title: "Код қате", description: "6 таңбалы кодты енгізіңіз" });
+  const handleSignin = async () => {
+    if (!email.includes("@") || password.length < 6) {
+      toast({
+        variant: "destructive",
+        title: "Қате",
+        description: "Email және пароль енгізіңіз",
+      });
       return;
     }
-    setIsVerifying(true);
-    const { error } = await supabase.auth.verifyOtp({
+
+    setIsLoading(true);
+
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email,
-      token: code,
-      type: "email",
+      password,
     });
-    setIsVerifying(false);
 
-    if (error) {
-      toast({ variant: "destructive", title: "Растау сәтсіз", description: error.message });
+    setIsLoading(false);
+
+    if (authError) {
+      toast({
+        variant: "destructive",
+        title: "Кіру сәтсіз",
+        description: authError.message,
+      });
       return;
     }
 
-    toast({ title: "Құттықтаймыз!", description: "Email расталды, енді толық функционал ашылды" });
-    navigate("/");
+    if (!authData.user) {
+      toast({
+        variant: "destructive",
+        title: "Қате",
+        description: "Пайдаланушы табылмады",
+      });
+      return;
+    }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("is_verified")
+      .eq("user_id", authData.user.id)
+      .single();
+
+    if (profile?.is_verified) {
+      toast({
+        title: "Кіру сәтті!",
+        description: "Жүйеге кірдіңіз",
+      });
+      navigate("/");
+    } else {
+      toast({
+        title: "Email расталмаған",
+        description: "Алдымен email растау керек",
+      });
+      navigate("/verify-email");
+    }
   };
 
   return (
@@ -104,8 +190,10 @@ const Auth = () => {
 
       <Card className="w-full max-w-xl relative z-10 bg-card/95 backdrop-blur border border-primary/20 shadow-elegant">
         <CardHeader className="text-center space-y-2">
-          <CardTitle className="text-3xl font-bold">Email верификациясы</CardTitle>
-          <CardDescription>Кодты енгізбей коллекция, карта, ойын ашылмайды</CardDescription>
+          <CardTitle className="text-3xl font-bold">TENGIR</CardTitle>
+          <CardDescription>
+            Email верификациясы: коллекция, карта, ойын ашылады
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="signin" value={mode} onValueChange={(value) => setMode(value as typeof mode)} className="w-full">
@@ -127,27 +215,22 @@ const Auth = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="signin-code">6 таңбалы код</Label>
+                <Label htmlFor="signin-password">Пароль</Label>
                 <Input
-                  id="signin-code"
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={6}
-                  placeholder="000000"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+                  id="signin-password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  minLength={6}
+                  required
                 />
               </div>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Button type="button" className="flex-1" onClick={sendCode} disabled={isCodeDisabled}>
-                  {secondsLeft > 0 ? `Қайта жіберу ${secondsLeft}s` : "Код жіберу"}
-                </Button>
-                <Button type="button" variant="secondary" className="flex-1" onClick={verifyCode} disabled={isVerifying}>
-                  {isVerifying ? "Тексеру..." : "Кіру"}
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                noreply@mydomain.kz арқылы келетін кодты енгізіңіз. Қауіпсіздік үшін камера/геолокация сұралмайды.
+              <Button type="button" className="w-full" onClick={handleSignin} disabled={isLoading}>
+                {isLoading ? "Жүктеу..." : "Кіру"}
+              </Button>
+              <p className="text-xs text-muted-foreground text-center">
+                Email расталмаған болса, верификация бетіне өтесіз
               </p>
             </TabsContent>
 
@@ -175,27 +258,23 @@ const Auth = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="signup-code">6 таңбалы код</Label>
+                <Label htmlFor="signup-password">Пароль</Label>
                 <Input
-                  id="signup-code"
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={6}
-                  placeholder="000000"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+                  id="signup-password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  minLength={6}
+                  required
                 />
+                <p className="text-xs text-muted-foreground">Ең кем 6 таңба</p>
               </div>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Button type="button" className="flex-1" onClick={sendCode} disabled={isCodeDisabled}>
-                  {secondsLeft > 0 ? `Қайта жіберу ${secondsLeft}s` : "Код жіберу"}
-                </Button>
-                <Button type="button" variant="secondary" className="flex-1" onClick={verifyCode} disabled={isVerifying}>
-                  {isVerifying ? "Растау..." : "Тіркелу"}
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                6 таңбалы кодты енгізген соң ғана коллекция, карта және ойын толық ашылады.
+              <Button type="button" className="w-full" onClick={handleSignup} disabled={isLoading}>
+                {isLoading ? "Жүктеу..." : "Тіркелу"}
+              </Button>
+              <p className="text-xs text-muted-foreground text-center">
+                Тіркелгеннен кейін email растау үшін 6 таңбалы код аласыз
               </p>
             </TabsContent>
           </Tabs>
