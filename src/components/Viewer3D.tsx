@@ -1,6 +1,7 @@
 import { useRef, useState, Suspense } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, PerspectiveCamera, useGLTF, Environment, Grid } from "@react-three/drei";
+import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +15,11 @@ interface Viewer3DProps {
   showBackground?: boolean;
 }
 
+const GLTFModel = ({ url }: { url: string }) => {
+  const { scene } = useGLTF(url);
+  return <primitive object={scene} />;
+};
+
 // Sample 3D model component (uses a basic geometry when no model URL is provided)
 const Model3D = ({ url }: { url?: string }) => {
   const meshRef = useRef<THREE.Mesh>(null);
@@ -25,14 +31,7 @@ const Model3D = ({ url }: { url?: string }) => {
     }
   });
 
-  if (url) {
-    try {
-      const { scene } = useGLTF(url);
-      return <primitive object={scene} />;
-    } catch (error) {
-      console.error("Error loading model:", error);
-    }
-  }
+  if (url) return <GLTFModel url={url} />;
 
   // Default geometry representing architectural structure
   return (
@@ -96,13 +95,13 @@ export const Viewer3D = ({
   modelUrl, 
   title = "Архитектурный объект", 
   description = "3D модель исторического памятника",
-  showBackground = true 
+  showBackground = true
 }: Viewer3DProps) => {
   const [zoom, setZoom] = useState(1);
   const [showMeasurements, setShowMeasurements] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const cameraRef = useRef<THREE.PerspectiveCamera>(null);
-  const controlsRef = useRef<any>(null);
+  const controlsRef = useRef<OrbitControlsImpl | null>(null);
 
   const handleReset = () => {
     if (controlsRef.current) {

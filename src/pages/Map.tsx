@@ -1,11 +1,19 @@
+import { useMemo, useState } from "react";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Map as MapIcon, MapPin, Filter, Eye } from "lucide-react";
+import { MapPin, Filter, Eye } from "lucide-react";
+import KazakhstanMap from "@/components/KazakhstanMap";
+import { buildRegionMarkers } from "@/utils/regionMarkers";
+import { archaeologicalObjects } from "@/data/archaeologicalObjects";
 
 const Map = () => {
+  const [selectedRegion, setSelectedRegion] = useState("");
+
+  const markers = useMemo(() => buildRegionMarkers(archaeologicalObjects), []);
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navigation />
@@ -41,33 +49,22 @@ const Map = () => {
         {/* Map Area */}
         <section className="py-8">
           <div className="container mx-auto px-4">
-            <Card className="overflow-hidden shadow-elegant">
-              {/* Map Placeholder */}
-              <div className="aspect-video md:aspect-[21/9] bg-gradient-subtle flex items-center justify-center">
-                <div className="text-center p-8">
-                  <MapIcon className="w-20 h-20 text-primary mx-auto mb-4" />
-                  <h3 className="font-serif text-2xl font-bold mb-2">
-                    Интерактивная карта Казахстана
-                  </h3>
-                  <p className="text-muted-foreground mb-6">
-                    Здесь будет отображаться географическое положение всех объектов
-                  </p>
-                  <div className="flex gap-3 justify-center flex-wrap">
-                    <div className="flex items-center gap-2 px-3 py-1 bg-background rounded-full border">
-                      <div className="w-3 h-3 bg-primary rounded-full shadow-gold" />
-                      <span className="text-sm">Архитектура</span>
-                    </div>
-                    <div className="flex items-center gap-2 px-3 py-1 bg-background rounded-full border">
-                      <div className="w-3 h-3 bg-secondary rounded-full" />
-                      <span className="text-sm">Археология</span>
-                    </div>
-                    <div className="flex items-center gap-2 px-3 py-1 bg-background rounded-full border">
-                      <div className="w-3 h-3 bg-accent rounded-full" />
-                      <span className="text-sm">Петроглифы</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <Card className="overflow-hidden shadow-elegant p-4 md:p-6">
+              <KazakhstanMap
+                markers={markers}
+                showLegend
+                selectedRegion={selectedRegion}
+                onRegionSelect={setSelectedRegion}
+                heading="Авторлық карта / Авторская карта"
+                subheading="Mapbox немесе басқа сервистерсіз, тек өзіміз салған интерактивті карта"
+                legendNote="Маркерлер бірдей координат жүйесінде есептелді"
+              />
+              {selectedRegion && (
+                <p className="text-xs text-muted-foreground mt-3 flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  {`Таңдалған өңір: ${selectedRegion}`}
+                </p>
+              )}
             </Card>
           </div>
         </section>

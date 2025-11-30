@@ -139,9 +139,10 @@ const Upload3D = () => {
         setUploadProgress(0);
       }, 1000);
 
-    } catch (error: any) {
-      console.error('Upload error:', error);
-      toast.error(error.message || "Жүктеу сәтсіз аяқталды");
+    } catch (error) {
+      console.error("Upload error:", error);
+      const errorMessage = error instanceof Error ? error.message : "Жүктеу сәтсіз аяқталды";
+      toast.error(errorMessage);
     } finally {
       setUploading(false);
     }
