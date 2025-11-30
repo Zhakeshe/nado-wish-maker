@@ -91,9 +91,8 @@ serve(async (req: Request): Promise<Response> => {
     await client.send({
       from: SMTP_FROM_EMAIL!,
       to: email,
-      subject: "MuseoNet – Email верификациясы",
-      content: "Ваш код верификации: " + code,
-      html: buildHtmlBody(code),
+      subject: "SMTP Plain Test",
+      content: "Hello! This is a plain SMTP test.",
     });
 
     await client.close();
@@ -107,12 +106,9 @@ serve(async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("[SMTP] Error in send-verification-email function:", error);
 
-    return new Response(
-      JSON.stringify({ error: error?.message ?? String(error) }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
-    );
+    return new Response(JSON.stringify({ error: error?.message ?? String(error) }), {
+      status: 500,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
   }
 });
