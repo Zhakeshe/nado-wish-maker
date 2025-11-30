@@ -1,206 +1,77 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
-
-const smtpClient = new SMTPClient({
-  connection: {
-    hostname: Deno.env.get("SMTP_HOST") || "",
-    port: parseInt(Deno.env.get("SMTP_PORT") || "465"),
-    tls: true,
-    auth: {
-      username: Deno.env.get("SMTP_USERNAME") || "",
-      password: Deno.env.get("SMTP_PASSWORD") || "",
-    },
-  },
-});
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
-interface VerificationEmailRequest {
-  email: string;
-  code: string;
-}
-
-const handler = async (req: Request): Promise<Response> => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
-
-  try {
-    const { email, code }: VerificationEmailRequest = await req.json();
-
-    const fromEmail = Deno.env.get("SMTP_FROM_EMAIL") || "no-reply@museonet.world";
-    console.log(`[SMTP] Starting email send to ${email} from ${fromEmail}`);
-    console.log(`[SMTP] Code: ${code}`);
-    console.log(`[SMTP] SMTP Server: ${Deno.env.get("SMTP_HOST")}:${Deno.env.get("SMTP_PORT")}`);
-
-    const emailResult = await smtpClient.send({
-      from: fromEmail,
-      to: email,
-      subject: "Верификациялық код / Verification Code",
-      headers: {
-        "X-Mailer": "TENGIR Museum System",
-        "X-Priority": "1",
-        "Importance": "high",
-        "Reply-To": fromEmail,
-      },
-      html: `
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <style>
-              body {
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-                background-color: #f5f5f5;
-                margin: 0;
-                padding: 20px;
-              }
-              .container {
-                max-width: 600px;
-                margin: 0 auto;
-                background-color: #ffffff;
-                border-radius: 16px;
-                overflow: hidden;
-                box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-              }
-              .header {
-                background: linear-gradient(135deg, #E33E64, #FFD166);
-                padding: 40px 20px;
-                text-align: center;
-                color: #ffffff;
-              }
-              .header h1 {
-                margin: 0;
-                font-size: 28px;
-                font-weight: bold;
-              }
-              .content {
-                padding: 40px 30px;
-                text-align: center;
-              }
-              .code-container {
-                background: #F5EFE6;
-                border: 2px solid #E33E64;
-                border-radius: 12px;
-                padding: 30px;
-                margin: 30px 0;
-              }
-              .code {
-                font-size: 42px;
-                font-weight: bold;
-                letter-spacing: 8px;
-                color: #E33E64;
-                font-family: 'Courier New', monospace;
-              }
-              .message {
-                color: #666666;
-                font-size: 16px;
-                line-height: 1.6;
-                margin: 20px 0;
-              }
-              .warning {
-                background: #fff8e1;
-                border-left: 4px solid #FFD166;
-                padding: 15px;
-                margin: 20px 0;
-                text-align: left;
-                font-size: 14px;
-                color: #333333;
-              }
-              .footer {
-                background: #F5EFE6;
-                padding: 20px;
-                text-align: center;
-                font-size: 12px;
-                color: #999999;
-              }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <h1>TENGIR</h1>
-                <p style="margin: 10px 0 0 0; font-size: 16px;">Қазақстан археологиялық музейі</p>
-              </div>
-              
-              <div class="content">
-                <h2 style="color: #222222; margin-bottom: 20px;">Email верификациясы</h2>
-                
-                <p class="message">
-                  <strong>Сәлеметсіз бе!</strong><br>
-                  TENGIR платформасына қош келдіңіз! Тіркелуді аяқтау үшін төмендегі кодты енгізіңіз.
-                </p>
-                
-                <div class="code-container">
-                  <div style="font-size: 14px; color: #666666; margin-bottom: 10px;">Верификация коды:</div>
-                  <div class="code">${code}</div>
-                </div>
-                
-                <p class="message">
-                  Бұл код <strong>5 минут</strong> ішінде жарамды.
-                </p>
-                
-                <div class="warning">
-                  ⚠️ <strong>Маңызды:</strong> Егер сіз тіркелмеген болсаңыз, бұл хатты елемеңіз. Кодты ешкіммен бөліспеңіз.
-                </div>
-                
-                <hr style="border: none; border-top: 1px solid #eeeeee; margin: 30px 0;">
-                
-                <p style="font-size: 14px; color: #666666; margin-top: 20px;">
-                  Email расталғаннан кейін сіз мына мүмкіндіктерге қол жеткізе аласыз:<br>
-                  🎮 Білім беру ойындары<br>
-                  🗺️ Интерактивті карта<br>
-                  📦 3D коллекция<br>
-                  👤 Жеке кабинет
-                </p>
-              </div>
-              
-              <div class="footer">
-                <p>© 2025 TENGIR / MuseoNet. Барлық құқықтар қорғалған.</p>
-                <p>Ақтау, Қазақстан | +7 700 255 18 36</p>
-              </div>
-            </div>
-          </body>
-        </html>
-      `,
-    });
-
-    console.log("[SMTP] Email send result:", JSON.stringify(emailResult));
-    
-    await smtpClient.close();
-
-    console.log("[SMTP] Email sent successfully and SMTP connection closed");
-    console.log(`[SMTP] Recipient: ${email}, Code: ${code}, Time: ${new Date().toISOString()}`);
-
-    return new Response(JSON.stringify({ 
-      success: true, 
-      message: "Verification email sent",
-      debug: {
-        recipient: email,
-        from: fromEmail,
-        timestamp: new Date().toISOString()
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background: #f4f4f7;
+        font-family: Arial, sans-serif;
       }
-    }), {
-      status: 200,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
-    });
-  } catch (error: any) {
-    console.error("[SMTP] Error in send-verification-email function:", error);
-    console.error("[SMTP] Error stack:", error.stack);
-    console.error("[SMTP] Error details:", JSON.stringify(error, null, 2));
-    return new Response(JSON.stringify({ 
-      error: error.message,
-      details: error.stack,
-      timestamp: new Date().toISOString()
-    }), {
-      status: 500,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
-    });
-  }
-};
+      .container {
+        max-width: 580px;
+        margin: 30px auto;
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 30px;
+        border: 1px solid #e2e2e2;
+      }
+      h1 {
+        font-size: 22px;
+        color: #333333;
+        margin-top: 0;
+        text-align: center;
+      }
+      p {
+        font-size: 15px;
+        color: #444444;
+        line-height: 1.5;
+      }
+      .code-box {
+        margin: 25px 0;
+        padding: 18px;
+        background: #f9f9fb;
+        border: 1px solid #d8d8dd;
+        border-radius: 8px;
+        text-align: center;
+      }
+      .code {
+        font-size: 36px;
+        letter-spacing: 6px;
+        font-weight: bold;
+        color: #d9374a;
+        font-family: "Courier New", monospace;
+      }
+      .footer {
+        margin-top: 30px;
+        font-size: 12px;
+        color: #888888;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Museonet — Email верификация</h1>
 
-serve(handler);
+      <p>Сәлеметсіз бе! Тіркелуді аяқтау үшін төмендегі верификация кодын енгізіңіз.</p>
+
+      <div class="code-box">
+        <div class="code">${code}</div>
+      </div>
+
+      <p>Бұл код <strong>5 минут</strong> ішінде жарамды.</p>
+
+      <p style="font-size: 13px; color: #666;">
+        Егер бұл әрекетті сіз жасамаған болсаңыз, хатты елемей-ақ қойыңыз.
+      </p>
+
+      <div class="footer">
+        © 2025 TENGIR / MuseoNet<br />
+        Ақтау, Қазақстан
+      </div>
+    </div>
+  </body>
+</html>
