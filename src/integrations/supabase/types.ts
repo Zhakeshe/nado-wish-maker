@@ -116,30 +116,42 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          code_expires_at: string | null
           created_at: string
           full_name: string | null
           id: string
+          is_verified: boolean | null
+          last_resend_at: string | null
           points: number
           updated_at: string
           user_id: string
+          verification_code: string | null
         }
         Insert: {
           avatar_url?: string | null
+          code_expires_at?: string | null
           created_at?: string
           full_name?: string | null
           id?: string
+          is_verified?: boolean | null
+          last_resend_at?: string | null
           points?: number
           updated_at?: string
           user_id: string
+          verification_code?: string | null
         }
         Update: {
           avatar_url?: string | null
+          code_expires_at?: string | null
           created_at?: string
           full_name?: string | null
           id?: string
+          is_verified?: boolean | null
+          last_resend_at?: string | null
           points?: number
           updated_at?: string
           user_id?: string
+          verification_code?: string | null
         }
         Relationships: []
       }
@@ -205,6 +217,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_user_verified: { Args: { user_id_param: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
