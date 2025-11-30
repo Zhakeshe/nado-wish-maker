@@ -32,12 +32,20 @@ const handler = async (req: Request): Promise<Response> => {
     const { email, code }: VerificationEmailRequest = await req.json();
 
     const fromEmail = Deno.env.get("SMTP_FROM_EMAIL") || "no-reply@museonet.world";
-    console.log(`Sending verification code to ${email} from ${fromEmail}`);
+    console.log(`[SMTP] Starting email send to ${email} from ${fromEmail}`);
+    console.log(`[SMTP] Code: ${code}`);
+    console.log(`[SMTP] SMTP Server: ${Deno.env.get("SMTP_HOST")}:${Deno.env.get("SMTP_PORT")}`);
 
-    await smtpClient.send({
+    const emailResult = await smtpClient.send({
       from: fromEmail,
       to: email,
       subject: "Верификациялық код / Verification Code",
+      headers: {
+        "X-Mailer": "TENGIR Museum System",
+        "X-Priority": "1",
+        "Importance": "high",
+        "Reply-To": fromEmail,
+      },
       html: `
         <!DOCTYPE html>
         <html>
@@ -161,17 +169,34 @@ const handler = async (req: Request): Promise<Response> => {
       `,
     });
 
+    console.log("[SMTP] Email send result:", JSON.stringify(emailResult));
+    
     await smtpClient.close();
 
-    console.log("Email sent successfully via SMTP");
+    console.log("[SMTP] Email sent successfully and SMTP connection closed");
+    console.log(`[SMTP] Recipient: ${email}, Code: ${code}, Time: ${new Date().toISOString()}`);
 
-    return new Response(JSON.stringify({ success: true, message: "Verification email sent" }), {
+    return new Response(JSON.stringify({ 
+      success: true, 
+      message: "Verification email sent",
+      debug: {
+        recipient: email,
+        from: fromEmail,
+        timestamp: new Date().toISOString()
+      }
+    }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
   } catch (error: any) {
-    console.error("Error in send-verification-email function:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error("[SMTP] Error in send-verification-email function:", error);
+    console.error("[SMTP] Error stack:", error.stack);
+    console.error("[SMTP] Error details:", JSON.stringify(error, null, 2));
+    return new Response(JSON.stringify({ 
+      error: error.message,
+      details: error.stack,
+      timestamp: new Date().toISOString()
+    }), {
       status: 500,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
