@@ -1,6 +1,11 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const SMTP_HOST = Deno.env.get("SMTP_HOST");
+const SMTP_PORT = parseInt(Deno.env.get("SMTP_PORT") || "465");
+const SMTP_USERNAME = Deno.env.get("SMTP_USERNAME");
+const SMTP_PASSWORD = Deno.env.get("SMTP_PASSWORD");
+const SMTP_FROM_EMAIL = Deno.env.get("SMTP_FROM_EMAIL");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -68,43 +73,39 @@ serve(async (req: Request): Promise<Response> => {
       });
     }
 
-    console.log(`[Resend] Sending verification code to ${email}`);
+    console.log(`[SMTP] Sending verification code to ${email}`);
+    console.log(`[SMTP] Using host: ${SMTP_HOST}, port: ${SMTP_PORT}`);
 
-    const resendResponse = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
+    const client = new SMTPClient({
+      connection: {
+        hostname: SMTP_HOST!,
+        port: SMTP_PORT,
+        tls: true,
+        auth: {
+          username: SMTP_USERNAME!,
+          password: SMTP_PASSWORD!,
+        },
       },
-      body: JSON.stringify({
-        from: "MuseoNet <onboarding@resend.dev>",
-        to: email,
-        subject: "MuseoNet – Email верификациясы",
-        html: buildHtmlBody(code),
-      }),
     });
 
-    const resendData = await resendResponse.json();
+    await client.send({
+      from: SMTP_FROM_EMAIL!,
+      to: email,
+      subject: "MuseoNet – Email верификациясы",
+      content: "Ваш код верификации: " + code,
+      html: buildHtmlBody(code),
+    });
 
-    if (!resendResponse.ok) {
-      console.error("[Resend] Error:", resendData);
-      return new Response(
-        JSON.stringify({ error: "Failed to send email", details: resendData }),
-        {
-          status: resendResponse.status,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
-    }
+    await client.close();
 
-    console.log("[Resend] Email sent successfully:", resendData);
+    console.log("[SMTP] Email sent successfully");
 
-    return new Response(JSON.stringify({ success: true, id: resendData.id }), {
+    return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
   } catch (error: any) {
-    console.error("[Resend] Error in send-verification-email function:", error);
+    console.error("[SMTP] Error in send-verification-email function:", error);
 
     return new Response(
       JSON.stringify({ error: error?.message ?? String(error) }),
