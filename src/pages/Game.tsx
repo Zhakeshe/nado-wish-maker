@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,10 @@ import { HistoricalFactModal } from "@/components/game/HistoricalFactModal";
 import { archaeologicalObjects } from "@/data/archaeologicalObjects";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import type { User } from "@supabase/supabase-js";
 import { useLanguage } from "@/contexts/LanguageContext";
+import KazakhstanMap from "@/components/KazakhstanMap";
+import { buildRegionMarkers, resolveRegionId } from "@/utils/regionMarkers";
 
 const Game = () => {
   const [currentObjectIndex, setCurrentObjectIndex] = useState(0);
@@ -20,10 +23,12 @@ const Game = () => {
   const [totalAttempts, setTotalAttempts] = useState(0);
   const [showResult, setShowResult] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [showHistoricalFact, setShowHistoricalFact] = useState(false);
   const { toast } = useToast();
   const { language } = useLanguage();
+
+  const regionMarkers = useMemo(() => buildRegionMarkers(archaeologicalObjects), []);
 
   const currentObject = archaeologicalObjects[currentObjectIndex];
   const accuracy = totalAttempts > 0 ? Math.round((correctAnswers / totalAttempts) * 100) : 0;
@@ -49,7 +54,7 @@ const Game = () => {
       return;
     }
 
-    const correct = selectedRegion === currentObject.region;
+    const correct = selectedRegion === resolveRegionId(currentObject.region);
     setIsCorrect(correct);
     setShowResult(true);
     setTotalAttempts(prev => prev + 1);
@@ -112,6 +117,11 @@ const Game = () => {
     }
   };
 
+  const handleSelectRegion = (regionName: string) => {
+    setSelectedRegion(regionName);
+    setShowResult(false);
+  };
+
   const nextQuestion = () => {
     setShowHistoricalFact(false);
     if (currentObjectIndex < archaeologicalObjects.length - 1) {
@@ -150,6 +160,9 @@ const Game = () => {
       step2: "Выберите правильный регион на карте",
       step3: "За правильный ответ получите поинты",
       step4: "Узнайте исторические факты после ответа",
+      mapTitle: "Авторская карта Казахстана",
+      mapSubtitle: "Маркерлер біздің өз картамызда орналасқан, Mapbox немесе Google карта емес",
+      mapFootnote: "Нажмите на точку региона или выберите его вручную ниже",
     },
     kz: {
       title: "Археологиялық ойын",
@@ -167,6 +180,9 @@ const Game = () => {
       step2: "Картадан дұрыс өңірді таңдаңыз",
       step3: "Дұрыс жауап үшін ұпай алыңыз",
       step4: "Жауаптан кейін тарихи фактілерді біліңіз",
+      mapTitle: "Қазақстанның авторлық картасы",
+      mapSubtitle: "Маркерлерді өзіміз салған картада орналастырдық, Mapbox не Google картасы емес",
+      mapFootnote: "Өңірді картадан басыңыз немесе төменге қолмен енгізіңіз",
     },
     en: {
       title: "Archaeological Game",
@@ -184,6 +200,9 @@ const Game = () => {
       step2: "Select the correct region on the map",
       step3: "Get points for correct answer",
       step4: "Learn historical facts after answering",
+      mapTitle: "Original map of Kazakhstan",
+      mapSubtitle: "Markers are placed on our own map instead of Mapbox or Google embeds",
+      mapFootnote: "Tap a region marker or enter it manually below",
     }
   };
 
@@ -222,38 +241,27 @@ const Game = () => {
           {/* Kazakhstan Map */}
           <section className="py-6 md:py-8 bg-gradient-sand">
             <div className="container mx-auto px-4">
-              <div className="max-w-4xl mx-auto">
+              <div className="max-w-5xl mx-auto">
                 <Card className="p-4 md:p-6 gradient-archaeology shadow-elegant border-2 border-primary/30">
-                  <div className="mb-4 md:mb-6 text-center">
-                    <div className="inline-flex items-center gap-2 mb-3">
-                      <MapPin className="w-5 h-5 text-primary" />
-                      <h2 className="font-serif text-xl md:text-2xl font-bold text-foreground">
-                        {language === 'ru' ? 'Карта Казахстана' : language === 'kz' ? 'Қазақстан картасы' : 'Map of Kazakhstan'}
-                      </h2>
-                    </div>
-                    <p className="text-xs md:text-sm text-muted-foreground">
-                      {language === 'ru' ? 'Изучите географию археологических находок' : 
-                       language === 'kz' ? 'Археологиялық табылымдардың географиясын зерттеңіз' : 
-                       'Explore the geography of archaeological finds'}
-                    </p>
-                  </div>
-                  <div className="relative overflow-hidden" style={{ borderRadius: '10px', boxShadow: '0 4px 16px rgba(212, 165, 116, 0.3)' }}>
-                    <iframe 
-                      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2323142.0616304865!2d59.5!3d47.9!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x424580b0a8d0d0db%3A0x74a13f787c0e908d!2z0JrQvtC80L7RgdGC0LjQvdCw0Y8g0JrQsNC70LDRgtC40LrQvtCy0LAsINCQ0LvQv9C10YHRgtC40YLQsA!5e0!3m2!1sru!2skz!4v1698599999999!5m2!1sru!2skz" 
-                      width="100%" 
-                      height="400"
-                      style={{ border: 0, borderRadius: '10px', filter: 'sepia(0.2) hue-rotate(10deg) saturate(0.85)' }}
-                      allowFullScreen
-                      loading="lazy"
-                      title="Kazakhstan Map"
-                      className="w-full md:h-[500px]"
-                    />
-                  </div>
+                  <KazakhstanMap
+                    markers={regionMarkers}
+                    selectedRegion={selectedRegion}
+                    onRegionSelect={handleSelectRegion}
+                    onMarkerClick={(marker) => {
+                      setShowResult(false);
+                      toast({
+                        title: marker.label,
+                        description: language === "kz" ? "Өңір таңдалды" : language === "ru" ? "Регион выбран" : "Region selected",
+                      });
+                    }}
+                    heading={t.mapTitle}
+                    subheading={`${t.mapSubtitle} · Mapbox-free`}
+                    legendNote={t.mapFootnote}
+                  />
                   <div className="mt-4 text-center">
-                    <p className="text-xs text-muted-foreground italic">
-                      {language === 'ru' ? 'По данным археологических исследований Казахстана' :
-                       language === 'kz' ? 'Қазақстанның археологиялық зерттеулері бойынша' :
-                       'According to archaeological research of Kazakhstan'}
+                    <p className="text-xs text-muted-foreground italic flex items-center gap-2 justify-center">
+                      <MapPin className="w-4 h-4 text-primary" />
+                      <span>{t.mapFootnote}</span>
                     </p>
                   </div>
                 </Card>
