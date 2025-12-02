@@ -17,21 +17,13 @@ interface VerificationPayload {
   code: string;
 }
 
-const buildHtmlBody = (code: string): string => {
-  return `<!DOCTYPE html>
-<html lang="ru">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Код подтверждения</title>
-  </head>
-  <body style="background-color: #ffffff; color: #222222; font-family: Arial, sans-serif;">
-    <p>Код подтверждения:</p>
-    <pre style="font-size: 20px; font-family: monospace; margin: 8px 0;">${code}</pre>
-    <p>Код действует 5 минут. Если вы не запрашивали письмо, просто игнорируйте его.</p>
-    <p style="color: #555555; font-size: 12px;">Это автоматическое письмо, отвечать не нужно.</p>
-  </body>
-</html>`;
+const buildPlainTextBody = (code: string): string => {
+  return [
+    "MuseoNet",
+    "Код входа:",
+    `${code}`,
+    "Действует 5 минут. Если код не запрашивали — просто игнорируйте это письмо.",
+  ].join("\n");
 };
 
 serve(async (req: Request): Promise<Response> => {
@@ -71,20 +63,17 @@ serve(async (req: Request): Promise<Response> => {
       },
     });
 
-    const htmlBody = buildHtmlBody(code);
-    const plainText = [
-      "Код подтверждения:",
-      `${code}`,
-      "Код действует 5 минут. Если вы не запрашивали письмо, просто игнорируйте его.",
-      "Отвечать не нужно — письмо отправлено автоматически.",
-    ].join("\n");
+    const plainText = buildPlainTextBody(code);
 
     await client.send({
       from: `MuseoNet <${SMTP_FROM_EMAIL!}>`,
       to: email,
-      subject: "Код подтверждения",
+      subject: "Код входа",
       content: plainText,
-      html: htmlBody,
+      html: undefined,
+      headers: {
+        "X-Entity-Type": "Transactional",
+      },
     });
 
     await client.close();
