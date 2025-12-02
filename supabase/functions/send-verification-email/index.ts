@@ -88,11 +88,16 @@ serve(async (req: Request): Promise<Response> => {
       },
     });
 
+    const htmlBody = buildHtmlBody(code);
+
     await client.send({
       from: SMTP_FROM_EMAIL!,
       to: email,
       subject: "SMTP Plain Test",
       content: "Hello! This is a plain SMTP test.",
+      subject: "MuseoNet: Email верификация",
+      content: `Сәлеметсіз бе! Тіркелуді аяқтау үшін верификация коды: ${code}. Код 5 минут ішінде жарамды.`,
+      html: htmlBody,
     });
 
     await client.close();
