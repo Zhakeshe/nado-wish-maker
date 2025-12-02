@@ -2,3 +2,6 @@ project_id = "mnulnrsoysybyreuktdt"
 
 [functions.send-verification-email]
 verify_jwt = false
+
+[functions.generate-3d-from-image]
+verify_jwt = false
