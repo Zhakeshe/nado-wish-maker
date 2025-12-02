@@ -1,12 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
+import { Resend } from "https://esm.sh/resend@2.0.0";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
-const SMTP_HOST = Deno.env.get("SMTP_HOST");
-const SMTP_PORT = parseInt(Deno.env.get("SMTP_PORT") || "465");
-const SMTP_USERNAME = Deno.env.get("SMTP_USERNAME");
-const SMTP_PASSWORD = Deno.env.get("SMTP_PASSWORD");
-const SMTP_FROM_EMAIL = Deno.env.get("SMTP_FROM_EMAIL");
+const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -124,7 +120,7 @@ serve(async (req: Request): Promise<Response> => {
                      "unknown";
     
     if (!checkRateLimit(clientIP)) {
-      console.log(`[SMTP] Rate limit exceeded for IP: ${clientIP}`);
+      console.log(`[Resend] Rate limit exceeded for IP: ${clientIP}`);
       return new Response(JSON.stringify({ error: "Too many requests. Please try again later." }), {
         status: 429,
         headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -144,7 +140,7 @@ serve(async (req: Request): Promise<Response> => {
 
     const validationResult = verificationSchema.safeParse(rawBody);
     if (!validationResult.success) {
-      console.log(`[SMTP] Validation failed:`, validationResult.error.errors);
+      console.log(`[Resend] Validation failed:`, validationResult.error.errors);
       return new Response(JSON.stringify({ error: "Invalid input", details: validationResult.error.errors }), {
         status: 400,
         headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -153,55 +149,33 @@ serve(async (req: Request): Promise<Response> => {
 
     const { email, code } = validationResult.data;
 
-    console.log(`[SMTP] Sending verification code to ${email} from IP: ${clientIP}`);
-    console.log(`[SMTP] Using host: ${SMTP_HOST}, port: ${SMTP_PORT}`);
-
-    const client = new SMTPClient({
-      connection: {
-        hostname: SMTP_HOST!,
-        port: SMTP_PORT,
-        tls: true,
-        auth: {
-          username: SMTP_USERNAME!,
-          password: SMTP_PASSWORD!,
-        },
-      },
-    });
+    console.log(`[Resend] Sending verification code to ${email} from IP: ${clientIP}`);
 
     const htmlBody = buildHtmlBody(code);
-    const plainText = [
-      "MuseoNet - Интерактивный музей архитектуры Казахстана",
-      "",
-      "Ваш код подтверждения: " + code,
-      "",
-      "Используйте этот код для подтверждения вашего email адреса.",
-      "Код действителен в течение 5 минут.",
-      "",
-      "Если вы не запрашивали этот код, просто проигнорируйте это письмо.",
-      "",
-      "---",
-      "© 2024 MuseoNet / TENGIR",
-      "Актау, Казахстан",
-    ].join("\n");
 
-    await client.send({
-      from: `MuseoNet <${SMTP_FROM_EMAIL!}>`,
-      to: email,
+    const { data, error } = await resend.emails.send({
+      from: "MuseoNet <onboarding@resend.dev>",
+      to: [email],
       subject: "Код подтверждения MuseoNet",
-      content: plainText,
       html: htmlBody,
     });
 
-    await client.close();
+    if (error) {
+      console.error("[Resend] Error sending email:", error);
+      return new Response(JSON.stringify({ error: "Failed to send email", details: error.message }), {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
 
-    console.log("[SMTP] Email sent successfully");
+    console.log("[Resend] Email sent successfully:", data);
 
-    return new Response(JSON.stringify({ success: true }), {
+    return new Response(JSON.stringify({ success: true, id: data?.id }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
   } catch (error: any) {
-    console.error("[SMTP] Error in send-verification-email function:", error);
+    console.error("[Resend] Error in send-verification-email function:", error);
 
     return new Response(JSON.stringify({ error: "Failed to send email" }), {
       status: 500,
