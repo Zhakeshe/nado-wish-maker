@@ -19,42 +19,20 @@ interface VerificationPayload {
 
 const buildHtmlBody = (code: string): string => {
   return `<!DOCTYPE html>
-<html lang="kk">
+<html lang="ru">
   <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MuseoNet – Верификация</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MuseoNet — код подтверждения</title>
   </head>
-  <body style="margin: 0; padding: 20px; font-family: Arial, sans-serif; background-color: #f5f5f5;">
-    <div style="max-width: 600px; margin: 0 auto; background: white; padding: 40px; border-radius: 8px;">
-      <h1 style="color: #222222; margin: 0 0 20px 0; font-size: 24px;">MuseoNet – Верификация email</h1>
-      <p style="color: #666666; line-height: 1.6; margin: 0 0 20px 0;">
-        Сәлеметсіз бе! Тіркелуді аяқтау үшін төмендегі верификация кодын енгізіңіз:
-      </p>
-      <div style="background: #f9f9f9; padding: 20px; border-radius: 6px; text-align: center; margin: 0 0 20px 0;">
-        <div style="font-size: 32px; font-weight: bold; color: #E33E64; letter-spacing: 4px; font-family: monospace;">
-          ${code}
-        </div>
-      </div>
-      <p style="color: #666666; line-height: 1.6; margin: 0 0 20px 0;">
-        Бұл код <strong>5 минут</strong> ішінде жарамды.
-      </p>
-      <p style="color: #999999; font-size: 14px; line-height: 1.6; margin: 0;">
-        Егер бұл әрекетті сіз жасамаған болсаңыз, хатты елемей-ақ қойыңыз.
-      </p>
-      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eeeeee; color: #999999; font-size: 12px; text-align: center;">
-        © 2025 TENGIR / MuseoNet<br>
-        Ақтау, Қазақстан
-  <body style="margin: 0; padding: 24px; font-family: Arial, sans-serif; background-color: #f7f7f7; color: #1f2937;">
-    <div style="max-width: 560px; margin: 0 auto; background: #ffffff; padding: 32px; border-radius: 12px; border: 1px solid #e5e7eb;">
-      <h1 style="margin: 0 0 16px 0; font-size: 22px; font-weight: 700;">MuseoNet – Email верификация</h1>
-      <p style="margin: 0 0 16px 0; line-height: 1.6;">Сіз MuseoNet сервисінде тіркелу үшін верификация кодын сұрадыңыз. Код төменде көрсетілген және 5 минут ішінде жарамды.</p>
-      <div style="display: inline-block; margin: 0 0 16px 0; padding: 14px 18px; border-radius: 10px; background: #f3f4f6; border: 1px solid #e5e7eb; font-size: 26px; letter-spacing: 4px; font-family: 'Roboto Mono', 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;">
-        ${code}
-      </div>
-      <p style="margin: 0 0 12px 0; line-height: 1.6;">Егер бұл сұранысты сіз жасамаған болсаңыз, ештеңе істемеңіз — аккаунт ашылмайды.</p>
-      <p style="margin: 0; color: #6b7280; font-size: 13px; line-height: 1.6;">Бұл автоматты хат. Жауап берудің қажеті жоқ.</p>
-    </div>
+  <body>
+    <main>
+      <h1>MuseoNet — код подтверждения</h1>
+      <p>Вы запросили код подтверждения для входа или регистрации в MuseoNet. Код действителен в течение 5 минут.</p>
+      <p><strong>Код:</strong> <code>${code}</code></p>
+      <p>Если вы не запрашивали код, просто игнорируйте это письмо — аккаунт создан не будет.</p>
+      <p style="color: #555; font-size: 14px;">Это автоматическое письмо, отвечать на него не нужно.</p>
+    </main>
   </body>
 </html>`;
 };
@@ -98,19 +76,16 @@ serve(async (req: Request): Promise<Response> => {
 
     const htmlBody = buildHtmlBody(code);
     const plainText = [
-      "Сіз MuseoNet сервисінде тіркелу үшін верификация кодын сұрадыңыз.",
+      "Вы запросили код подтверждения для MuseoNet.",
       `Код: ${code}`,
-      "Код 5 минут ішінде жарамды.",
-      "Егер бұл сұранысты сіз жасамаған болсаңыз, еш әрекет етпеңіз.",
+      "Код действует 5 минут.",
+      "Если вы не запрашивали код, ничего делать не нужно.",
     ].join("\n");
 
     await client.send({
-      from: SMTP_FROM_EMAIL!,
       from: `MuseoNet <${SMTP_FROM_EMAIL!}>`,
       to: email,
-      subject: "SMTP Plain Test",
-      content: "Hello! This is a plain SMTP test.",
-      subject: "MuseoNet – верификация коды",
+      subject: "MuseoNet — код подтверждения",
       content: plainText,
       html: htmlBody,
     });
