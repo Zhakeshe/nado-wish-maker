@@ -23,13 +23,13 @@ const buildHtmlBody = (code: string): string => {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Ваш код для входа в MuseoNet</title>
+    <title>Код подтверждения</title>
   </head>
-  <body>
-    <p>Ваш код для входа в MuseoNet:</p>
-    <p style="font-size: 20px; font-family: monospace; margin: 12px 0;">${code}</p>
-    <p>Код действует 5 минут. Если запрос делали не вы, просто игнорируйте это письмо.</p>
-    <p style="color: #666; font-size: 12px;">Письмо отправлено автоматически, отвечать не нужно.</p>
+  <body style="background-color: #ffffff; color: #222222; font-family: Arial, sans-serif;">
+    <p>Код подтверждения:</p>
+    <pre style="font-size: 20px; font-family: monospace; margin: 8px 0;">${code}</pre>
+    <p>Код действует 5 минут. Если вы не запрашивали письмо, просто игнорируйте его.</p>
+    <p style="color: #555555; font-size: 12px;">Это автоматическое письмо, отвечать не нужно.</p>
   </body>
 </html>`;
 };
@@ -73,15 +73,16 @@ serve(async (req: Request): Promise<Response> => {
 
     const htmlBody = buildHtmlBody(code);
     const plainText = [
-      "Ваш код для входа в MuseoNet:",
+      "Код подтверждения:",
       `${code}`,
-      "Код действует 5 минут. Если запрос делали не вы, просто игнорируйте это письмо.",
+      "Код действует 5 минут. Если вы не запрашивали письмо, просто игнорируйте его.",
+      "Отвечать не нужно — письмо отправлено автоматически.",
     ].join("\n");
 
     await client.send({
       from: `MuseoNet <${SMTP_FROM_EMAIL!}>`,
       to: email,
-      subject: "MuseoNet: ваш код для входа",
+      subject: "Код подтверждения",
       content: plainText,
       html: htmlBody,
     });
