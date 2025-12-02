@@ -45,7 +45,15 @@ const buildHtmlBody = (code: string): string => {
       <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eeeeee; color: #999999; font-size: 12px; text-align: center;">
         © 2025 TENGIR / MuseoNet<br>
         Ақтау, Қазақстан
+  <body style="margin: 0; padding: 24px; font-family: Arial, sans-serif; background-color: #f7f7f7; color: #1f2937;">
+    <div style="max-width: 560px; margin: 0 auto; background: #ffffff; padding: 32px; border-radius: 12px; border: 1px solid #e5e7eb;">
+      <h1 style="margin: 0 0 16px 0; font-size: 22px; font-weight: 700;">MuseoNet – Email верификация</h1>
+      <p style="margin: 0 0 16px 0; line-height: 1.6;">Сіз MuseoNet сервисінде тіркелу үшін верификация кодын сұрадыңыз. Код төменде көрсетілген және 5 минут ішінде жарамды.</p>
+      <div style="display: inline-block; margin: 0 0 16px 0; padding: 14px 18px; border-radius: 10px; background: #f3f4f6; border: 1px solid #e5e7eb; font-size: 26px; letter-spacing: 4px; font-family: 'Roboto Mono', 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;">
+        ${code}
       </div>
+      <p style="margin: 0 0 12px 0; line-height: 1.6;">Егер бұл сұранысты сіз жасамаған болсаңыз, ештеңе істемеңіз — аккаунт ашылмайды.</p>
+      <p style="margin: 0; color: #6b7280; font-size: 13px; line-height: 1.6;">Бұл автоматты хат. Жауап берудің қажеті жоқ.</p>
     </div>
   </body>
 </html>`;
@@ -89,14 +97,21 @@ serve(async (req: Request): Promise<Response> => {
     });
 
     const htmlBody = buildHtmlBody(code);
+    const plainText = [
+      "Сіз MuseoNet сервисінде тіркелу үшін верификация кодын сұрадыңыз.",
+      `Код: ${code}`,
+      "Код 5 минут ішінде жарамды.",
+      "Егер бұл сұранысты сіз жасамаған болсаңыз, еш әрекет етпеңіз.",
+    ].join("\n");
 
     await client.send({
       from: SMTP_FROM_EMAIL!,
+      from: `MuseoNet <${SMTP_FROM_EMAIL!}>`,
       to: email,
       subject: "SMTP Plain Test",
       content: "Hello! This is a plain SMTP test.",
-      subject: "MuseoNet: Email верификация",
-      content: `Сәлеметсіз бе! Тіркелуді аяқтау үшін верификация коды: ${code}. Код 5 минут ішінде жарамды.`,
+      subject: "MuseoNet – верификация коды",
+      content: plainText,
       html: htmlBody,
     });
 
