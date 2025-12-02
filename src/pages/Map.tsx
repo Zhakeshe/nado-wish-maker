@@ -1,17 +1,15 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MapPin, Filter, Eye } from "lucide-react";
-import KazakhstanMap from "@/components/KazakhstanMap";
+import MapboxMap from "@/components/MapboxMap";
 import { buildRegionMarkers } from "@/utils/regionMarkers";
 import { archaeologicalObjects } from "@/data/archaeologicalObjects";
 
 const Map = () => {
-  const [selectedRegion, setSelectedRegion] = useState("");
-
   const markers = useMemo(() => buildRegionMarkers(archaeologicalObjects), []);
 
   return (
@@ -50,21 +48,7 @@ const Map = () => {
         <section className="py-8">
           <div className="container mx-auto px-4">
             <Card className="overflow-hidden shadow-elegant p-4 md:p-6">
-              <KazakhstanMap
-                markers={markers}
-                showLegend
-                selectedRegion={selectedRegion}
-                onRegionSelect={setSelectedRegion}
-                heading="Авторлық карта / Авторская карта"
-                subheading="Mapbox немесе басқа сервистерсіз, тек өзіміз салған интерактивті карта"
-                legendNote="Маркерлер бірдей координат жүйесінде есептелді"
-              />
-              {selectedRegion && (
-                <p className="text-xs text-muted-foreground mt-3 flex items-center gap-2">
-                  <MapPin className="w-4 h-4" />
-                  {`Таңдалған өңір: ${selectedRegion}`}
-                </p>
-              )}
+              <MapboxMap markers={markers} />
             </Card>
           </div>
         </section>
