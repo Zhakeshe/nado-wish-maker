@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const SMTP_HOST = Deno.env.get("SMTP_HOST");
 const SMTP_PORT = parseInt(Deno.env.get("SMTP_PORT") || "465");
@@ -12,9 +13,32 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface VerificationPayload {
-  email: string;
-  code: string;
+// Input validation schema
+const verificationSchema = z.object({
+  email: z.string().email("Invalid email format").max(255, "Email too long"),
+  code: z.string().length(6, "Code must be 6 digits").regex(/^\d+$/, "Code must be numeric"),
+});
+
+// Simple in-memory rate limiting (resets on function cold start)
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = 5; // 5 requests per minute per IP
+
+function checkRateLimit(clientIP: string): boolean {
+  const now = Date.now();
+  const record = rateLimitMap.get(clientIP);
+
+  if (!record || now > record.resetTime) {
+    rateLimitMap.set(clientIP, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+
+  if (record.count >= RATE_LIMIT_MAX_REQUESTS) {
+    return false;
+  }
+
+  record.count++;
+  return true;
 }
 
 const buildHtmlBody = (code: string): string => {
@@ -47,16 +71,42 @@ serve(async (req: Request): Promise<Response> => {
       });
     }
 
-    const { email, code } = (await req.json()) as VerificationPayload;
+    // Rate limiting check
+    const clientIP = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || 
+                     req.headers.get("x-real-ip") || 
+                     "unknown";
+    
+    if (!checkRateLimit(clientIP)) {
+      console.log(`[SMTP] Rate limit exceeded for IP: ${clientIP}`);
+      return new Response(JSON.stringify({ error: "Too many requests. Please try again later." }), {
+        status: 429,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
 
-    if (!email || !code) {
-      return new Response(JSON.stringify({ error: "Missing email or code" }), {
+    // Parse and validate input
+    let rawBody: unknown;
+    try {
+      rawBody = await req.json();
+    } catch {
+      return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
         status: 400,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
-    console.log(`[SMTP] Sending verification code to ${email}`);
+    const validationResult = verificationSchema.safeParse(rawBody);
+    if (!validationResult.success) {
+      console.log(`[SMTP] Validation failed:`, validationResult.error.errors);
+      return new Response(JSON.stringify({ error: "Invalid input", details: validationResult.error.errors }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    const { email, code } = validationResult.data;
+
+    console.log(`[SMTP] Sending verification code to ${email} from IP: ${clientIP}`);
     console.log(`[SMTP] Using host: ${SMTP_HOST}, port: ${SMTP_PORT}`);
 
     const client = new SMTPClient({
@@ -97,7 +147,7 @@ serve(async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("[SMTP] Error in send-verification-email function:", error);
 
-    return new Response(JSON.stringify({ error: error?.message ?? String(error) }), {
+    return new Response(JSON.stringify({ error: "Failed to send email" }), {
       status: 500,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
