@@ -26,7 +26,7 @@ const translations: Record<Language, Translations> = {
   ru: {
     home: "Главная",
     projects: "Проекты",
-    game: "Найти на карте",
+    game: "Игры",
     about: "О нас",
     news: "Новости",
     map: "Карта",
@@ -36,7 +36,7 @@ const translations: Record<Language, Translations> = {
   kz: {
     home: "Басты бет",
     projects: "Жобалар",
-    game: "Картадан табу",
+    game: "Ойындар",
     about: "Біз туралы",
     news: "Жаңалықтар",
     map: "Карта",
@@ -46,7 +46,7 @@ const translations: Record<Language, Translations> = {
   en: {
     home: "Home",
     projects: "Projects",
-    game: "Find on Map",
+    game: "Games",
     about: "About Us",
     news: "News",
     map: "Map",
@@ -106,7 +106,7 @@ export const Navigation = () => {
               {t.projects}
             </Link>
             <Link
-              to="/game"
+              to="/games"
               className="text-foreground hover:text-primary transition-smooth font-medium"
             >
               {t.game}
@@ -198,7 +198,7 @@ export const Navigation = () => {
               {t.projects}
             </Link>
             <Link
-              to="/game"
+              to="/games"
               className="block text-foreground hover:text-primary transition-smooth font-medium"
               onClick={() => setIsOpen(false)}
             >

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { MapPin } from "lucide-react";
@@ -42,9 +42,14 @@ const MapboxMap = ({ markers = [], onMarkerClick, language = 'kz', objectCounts 
   const map = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
   const [isMapReady, setIsMapReady] = useState(false);
+  const initRef = useRef(false);
+
+  // Memoize object counts to prevent unnecessary re-renders
+  const countsKey = useMemo(() => JSON.stringify(objectCounts), [objectCounts]);
 
   useEffect(() => {
-    if (!mapContainer.current || map.current) return;
+    if (!mapContainer.current || initRef.current) return;
+    initRef.current = true;
 
     mapboxgl.accessToken = MAPBOX_TOKEN;
 
@@ -63,71 +68,90 @@ const MapboxMap = ({ markers = [], onMarkerClick, language = 'kz', objectCounts 
 
     map.current.on("load", () => {
       setIsMapReady(true);
-
-      // Add oblast markers
-      OBLAST_DATA.forEach((oblast) => {
-        const count = objectCounts[oblast.id] || objectCounts[oblast.nameRu] || objectCounts[oblast.nameKz] || 0;
-        const name = language === 'kz' ? oblast.nameKz : language === 'en' ? oblast.nameEn : oblast.nameRu;
-
-        const el = document.createElement("div");
-        el.className = "mapbox-oblast-marker";
-        el.style.cssText = `
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          cursor: pointer;
-        `;
-        el.innerHTML = `
-          <div style="
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, #D4A574, #B8956E);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            border: 3px solid white;
-            transition: transform 0.2s;
-          " onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
-            <span style="color: white; font-weight: bold; font-size: 14px;">${count}</span>
-          </div>
-        `;
-
-        const popup = new mapboxgl.Popup({ offset: 25, closeButton: false }).setHTML(`
-          <div style="padding: 12px; min-width: 180px;">
-            <strong style="font-size: 14px; display: block; margin-bottom: 4px;">${name}</strong>
-            <p style="font-size: 13px; color: #666; margin: 0;">${count} ${language === 'kz' ? 'объект' : language === 'ru' ? 'объект(ов)' : 'object(s)'}</p>
-          </div>
-        `);
-
-        const mapboxMarker = new mapboxgl.Marker(el)
-          .setLngLat(oblast.coords)
-          .setPopup(popup)
-          .addTo(map.current!);
-
-        el.addEventListener("click", () => {
-          const regionMarker = markers.find(m => 
-            m.label === oblast.nameRu || 
-            m.label === oblast.nameKz || 
-            m.regionId === oblast.id
-          );
-          if (regionMarker && onMarkerClick) {
-            onMarkerClick(regionMarker);
-          }
-        });
-
-        markersRef.current.push(mapboxMarker);
-      });
+      addMarkers();
     });
 
     return () => {
       markersRef.current.forEach((m) => m.remove());
       markersRef.current = [];
-      map.current?.remove();
-      map.current = null;
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
+      initRef.current = false;
     };
-  }, [markers, onMarkerClick, language, objectCounts]);
+  }, []);
+
+  const addMarkers = () => {
+    if (!map.current) return;
+
+    // Clear existing markers
+    markersRef.current.forEach((m) => m.remove());
+    markersRef.current = [];
+
+    const counts = JSON.parse(countsKey || '{}');
+
+    OBLAST_DATA.forEach((oblast) => {
+      const count = counts[oblast.id] || counts[oblast.nameRu] || counts[oblast.nameKz] || 0;
+      const name = language === 'kz' ? oblast.nameKz : language === 'en' ? oblast.nameEn : oblast.nameRu;
+
+      const el = document.createElement("div");
+      el.style.cssText = `
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        cursor: pointer;
+      `;
+      el.innerHTML = `
+        <div style="
+          width: 40px;
+          height: 40px;
+          background: linear-gradient(135deg, #D4A574, #B8956E);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+          border: 3px solid white;
+          transition: transform 0.2s;
+        " onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+          <span style="color: white; font-weight: bold; font-size: 14px;">${count}</span>
+        </div>
+      `;
+
+      const popup = new mapboxgl.Popup({ offset: 25, closeButton: false }).setHTML(`
+        <div style="padding: 12px; min-width: 180px;">
+          <strong style="font-size: 14px; display: block; margin-bottom: 4px;">${name}</strong>
+          <p style="font-size: 13px; color: #666; margin: 0;">${count} ${language === 'kz' ? 'объект' : language === 'ru' ? 'объект(ов)' : 'object(s)'}</p>
+        </div>
+      `);
+
+      const mapboxMarker = new mapboxgl.Marker(el)
+        .setLngLat(oblast.coords)
+        .setPopup(popup)
+        .addTo(map.current!);
+
+      el.addEventListener("click", () => {
+        const regionMarker = markers.find(m => 
+          m.label === oblast.nameRu || 
+          m.label === oblast.nameKz || 
+          m.regionId === oblast.id
+        );
+        if (regionMarker && onMarkerClick) {
+          onMarkerClick(regionMarker);
+        }
+      });
+
+      markersRef.current.push(mapboxMarker);
+    });
+  };
+
+  // Update markers when counts change
+  useEffect(() => {
+    if (isMapReady) {
+      addMarkers();
+    }
+  }, [countsKey, language, isMapReady]);
 
   return (
     <div className="w-full space-y-4">

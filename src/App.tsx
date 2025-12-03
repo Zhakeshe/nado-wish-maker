@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import Index from "./pages/Index";
 import Projects from "./pages/Projects";
+import Games from "./pages/Games";
 import Game from "./pages/Game";
 import About from "./pages/About";
 import News from "./pages/News";
@@ -36,6 +37,7 @@ const App = () => (
             
             {/* Protected Routes - Require Email Verification */}
             <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
+            <Route path="/games" element={<ProtectedRoute><Games /></ProtectedRoute>} />
             <Route path="/game" element={<ProtectedRoute><Game /></ProtectedRoute>} />
             <Route path="/map" element={<ProtectedRoute><Map /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
