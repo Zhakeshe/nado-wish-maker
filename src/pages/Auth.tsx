@@ -38,8 +38,22 @@ const Auth = () => {
     checkUser();
   }, [navigate]);
 
+  const isValidEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email.trim());
+  };
+
   const handleSignup = async () => {
-    if (!email.includes("@") || !fullName.trim() || password.length < 6) {
+    if (!isValidEmail(email)) {
+      toast({
+        variant: "destructive",
+        title: "Қате",
+        description: "Email форматы дұрыс емес (мысалы: name@gmail.com)",
+      });
+      return;
+    }
+    
+    if (!fullName.trim() || password.length < 6) {
       toast({
         variant: "destructive",
         title: "Қате",
@@ -120,11 +134,20 @@ const Auth = () => {
   };
 
   const handleSignin = async () => {
-    if (!email.includes("@") || password.length < 6) {
+    if (!isValidEmail(email)) {
       toast({
         variant: "destructive",
         title: "Қате",
-        description: "Email және пароль енгізіңіз",
+        description: "Email форматы дұрыс емес",
+      });
+      return;
+    }
+    
+    if (password.length < 6) {
+      toast({
+        variant: "destructive",
+        title: "Қате",
+        description: "Пароль ең кем 6 таңба болуы керек",
       });
       return;
     }
