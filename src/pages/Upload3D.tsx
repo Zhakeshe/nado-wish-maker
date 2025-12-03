@@ -219,7 +219,7 @@ const Upload3D = () => {
         .getPublicUrl(imageName);
 
       setGenerationProgress(15);
-      toast.info("Meshy AI арқылы 3D модель жасалуда...");
+      toast.info("AI арқылы 3D модель жасалуда...");
 
       // Create Meshy task
       const { data: createData, error: createError } = await supabase.functions.invoke('generate-3d-from-image', {
@@ -227,7 +227,7 @@ const Upload3D = () => {
       });
 
       if (createError || createData?.error) {
-        throw new Error(createData?.error || createError?.message || "Meshy API қатесі");
+        throw new Error(createData?.error || createError?.message || "3D генерация API қатесі");
       }
 
       const taskId = createData.result;
@@ -280,7 +280,7 @@ const Upload3D = () => {
         .from('objects_3d')
         .insert({
           title: generationTitle,
-          description: generationDescription || "Meshy AI арқылы жасалған",
+          description: generationDescription || "AI арқылы жасалған",
           model_url: modelUrl,
           thumbnail_url: imageUrl,
           author_id: user.id,
@@ -448,8 +448,8 @@ const Upload3D = () => {
                     <Sparkles className="h-5 w-5 text-primary" />
                     Фотодан 3D Модель Жасау
                   </CardTitle>
-                  <CardDescription>
-                    Meshy AI арқылы суреттен автоматты түрде 3D модель жасаңыз
+                <CardDescription>
+                    AI арқылы суреттен автоматты түрде 3D модель жасаңыз
                   </CardDescription>
                 </CardHeader>
               </div>
