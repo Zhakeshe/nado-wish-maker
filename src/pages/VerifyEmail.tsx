@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Mail, CheckCircle2, AlertCircle } from "lucide-react";
+import { Mail, CheckCircle2, AlertCircle, ArrowLeft, Edit2 } from "lucide-react";
 import backgroundImage from "@/assets/background-petroglyphs.png";
 
 const RESEND_SECONDS = 60;
@@ -214,6 +214,16 @@ const VerifyEmail = () => {
 
   const isResendDisabled = isResending || secondsLeft > 0;
 
+  const handleChangeEmail = async () => {
+    // Sign out current user and redirect to auth page
+    await supabase.auth.signOut();
+    toast({
+      title: "Шығу сәтті",
+      description: "Жаңа email-мен тіркелуге болады",
+    });
+    navigate("/auth");
+  };
+
   return (
     <div
       className="min-h-screen flex items-center justify-center p-4 relative"
@@ -233,7 +243,18 @@ const VerifyEmail = () => {
           <CardTitle className="text-3xl font-bold">Email растау</CardTitle>
           <CardDescription>
             {userEmail && (
-              <span className="block font-medium text-foreground mt-2">{userEmail}</span>
+              <div className="mt-2 space-y-2">
+                <span className="block font-medium text-foreground">{userEmail}</span>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={handleChangeEmail}
+                  className="text-xs text-muted-foreground hover:text-primary gap-1"
+                >
+                  <Edit2 className="w-3 h-3" />
+                  Email қате ме? Өзгерту
+                </Button>
+              </div>
             )}
             Поштаңызға жіберілген 6 таңбалы кодты енгізіңіз
           </CardDescription>
