@@ -191,7 +191,7 @@ const VerifyEmail = () => {
     }
 
     const { error: emailError } = await supabase.functions.invoke("send-verification-email", {
-      body: { email: user.email, code: newCode },
+      body: { email: (user.email || "").trim().toLowerCase(), code: newCode },
     });
 
     setIsResending(false);
