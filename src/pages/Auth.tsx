@@ -97,7 +97,7 @@ const Auth = () => {
     }
 
     const { error: emailError } = await supabase.functions.invoke("send-verification-email", {
-      body: { email, code: verificationCode },
+      body: { email: email.trim().toLowerCase(), code: verificationCode },
     });
 
     setIsLoading(false);
