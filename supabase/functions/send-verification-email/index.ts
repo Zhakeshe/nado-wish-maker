@@ -115,10 +115,9 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     // Rate limiting check
-    const clientIP = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || 
-                     req.headers.get("x-real-ip") || 
-                     "unknown";
-    
+    const clientIP =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "unknown";
+
     if (!checkRateLimit(clientIP)) {
       console.log(`[Resend] Rate limit exceeded for IP: ${clientIP}`);
       return new Response(JSON.stringify({ error: "Too many requests. Please try again later." }), {
@@ -154,7 +153,7 @@ serve(async (req: Request): Promise<Response> => {
     const htmlBody = buildHtmlBody(code);
 
     const { data, error } = await resend.emails.send({
-      from: "MuseoNet <noreply@museonet.world>",
+      from: "MuseoNet <no-reply@museonet.world>",
       to: [email],
       subject: "Код подтверждения MuseoNet",
       html: htmlBody,
