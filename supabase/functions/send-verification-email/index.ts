@@ -154,7 +154,7 @@ serve(async (req: Request): Promise<Response> => {
     const htmlBody = buildHtmlBody(code);
 
     const { data, error } = await resend.emails.send({
-      from: "MuseoNet <onboarding@resend.dev>",
+      from: "MuseoNet <noreply@museonet.world>",
       to: [email],
       subject: "Код подтверждения MuseoNet",
       html: htmlBody,
