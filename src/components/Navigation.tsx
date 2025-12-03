@@ -26,7 +26,7 @@ const translations: Record<Language, Translations> = {
   ru: {
     home: "Главная",
     projects: "Проекты",
-    game: "Игра",
+    game: "Найти на карте",
     about: "О нас",
     news: "Новости",
     map: "Карта",
@@ -36,7 +36,7 @@ const translations: Record<Language, Translations> = {
   kz: {
     home: "Басты бет",
     projects: "Жобалар",
-    game: "Ойын",
+    game: "Картадан табу",
     about: "Біз туралы",
     news: "Жаңалықтар",
     map: "Карта",
@@ -46,7 +46,7 @@ const translations: Record<Language, Translations> = {
   en: {
     home: "Home",
     projects: "Projects",
-    game: "Game",
+    game: "Find on Map",
     about: "About Us",
     news: "News",
     map: "Map",
