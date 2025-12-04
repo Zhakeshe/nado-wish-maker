@@ -1,98 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-
-async function tryHuggingFace(imageUrl: string, hfToken: string): Promise<{ success: boolean; data?: any; error?: string }> {
-  const spaces = [
-    "https://dylanebert-lgm-tiny.hf.space/api/predict",
-    "https://stabilityai-triposr.hf.space/api/predict",
-  ];
-
-  for (const spaceUrl of spaces) {
-    try {
-      console.log(`Trying HF space: ${spaceUrl}`);
-      
-      const body = spaceUrl.includes('triposr') 
-        ? { data: [imageUrl, true, 0.5, 256] }
-        : { data: [imageUrl] };
-
-      const response = await fetch(spaceUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${hfToken}`,
-        },
-        body: JSON.stringify(body),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.data && data.data[0]) {
-          return { success: true, data: data.data[0] };
-        }
-      }
-      console.log(`HF space ${spaceUrl} failed with status: ${response.status}`);
-    } catch (e) {
-      console.log(`HF space ${spaceUrl} error:`, e);
-    }
-  }
-
-  return { success: false, error: 'All HF spaces unavailable' };
-}
-
-async function tryMeshy(imageUrl: string, meshyKey: string, action: string, taskId?: string): Promise<{ success: boolean; data?: any; error?: string }> {
-  const MESHY_API_URL = "https://api.meshy.ai/openapi/v1/image-to-3d";
-
-  try {
-    if (action === 'create') {
-      console.log('Trying Meshy API...');
-      const response = await fetch(MESHY_API_URL, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${meshyKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          image_url: imageUrl,
-          ai_model: 'meshy-4',
-          topology: 'triangle',
-          target_polycount: 30000,
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        return { success: true, data };
-      }
-      const errorText = await response.text();
-      console.log('Meshy create error:', response.status, errorText);
-      return { success: false, error: `Meshy API error: ${response.status}` };
-    }
-
-    if (action === 'status' && taskId) {
-      const response = await fetch(`${MESHY_API_URL}/${taskId}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${meshyKey}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        return { success: true, data };
-      }
-      return { success: false, error: `Meshy status error: ${response.status}` };
-    }
-  } catch (e) {
-    console.log('Meshy error:', e);
-    return { success: false, error: e instanceof Error ? e.message : 'Meshy error' };
-  }
-
-  return { success: false, error: 'Invalid action' };
-}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -103,12 +15,15 @@ serve(async (req) => {
     const { action, imageUrl, taskId } = await req.json();
     console.log(`3D Generation action: ${action}`, { imageUrl, taskId });
 
-    const HF_TOKEN = Deno.env.get('HUGGING_FACE_ACCESS_TOKEN');
-    const MESHY_KEY = Deno.env.get('MESHY_API_KEY');
+    const API_KEY = Deno.env.get('ARTIFICIAL_STUDIO_API_KEY');
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-    if (!HF_TOKEN && !MESHY_KEY) {
-      throw new Error('No API keys configured (HUGGING_FACE_ACCESS_TOKEN or MESHY_API_KEY)');
+    if (!API_KEY) {
+      throw new Error('ARTIFICIAL_STUDIO_API_KEY is not configured');
     }
+
+    const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
     // Create task
     if (action === 'create') {
@@ -116,40 +31,55 @@ serve(async (req) => {
         throw new Error('imageUrl is required');
       }
 
-      // Try HuggingFace first (free, synchronous)
-      if (HF_TOKEN) {
-        const hfResult = await tryHuggingFace(imageUrl, HF_TOKEN);
-        if (hfResult.success) {
-          console.log('HF success:', hfResult.data);
-          return new Response(JSON.stringify({
-            result: `hf_direct_${Date.now()}`,
-            status: 'SUCCEEDED',
-            model_urls: {
-              glb: hfResult.data
-            }
-          }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
-        }
+      console.log('Creating 3D generation task with Artificial Studio API...');
+      
+      const webhookUrl = `${SUPABASE_URL}/functions/v1/3d-webhook`;
+      
+      const response = await fetch('https://api.artificialstudio.ai/api/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': API_KEY,
+        },
+        body: JSON.stringify({
+          model: 'image-to-3d-object',
+          input: {
+            model: 'hunyuan3d-v21',
+            file: imageUrl,
+          },
+          webhook: webhookUrl,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Artificial Studio API error:', response.status, errorText);
+        throw new Error(`API error: ${response.status} - ${errorText}`);
       }
 
-      // Fallback to Meshy (async, needs polling)
-      if (MESHY_KEY) {
-        const meshyResult = await tryMeshy(imageUrl, MESHY_KEY, 'create');
-        if (meshyResult.success) {
-          console.log('Meshy task created:', meshyResult.data);
-          return new Response(JSON.stringify({
-            result: meshyResult.data.result,
-            status: 'PENDING',
-            source: 'meshy'
-          }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
-        }
-        throw new Error(meshyResult.error || 'Meshy API failed');
+      const data = await response.json();
+      console.log('Task created:', data);
+
+      // Store task in database for tracking
+      const { error: dbError } = await supabase
+        .from('generation_tasks')
+        .insert({
+          task_id: data.id,
+          status: 'PENDING',
+          image_url: imageUrl,
+        });
+
+      if (dbError) {
+        console.log('Note: Could not store task in DB:', dbError.message);
       }
 
-      throw new Error('3D generation unavailable - all APIs failed');
+      return new Response(JSON.stringify({
+        result: data.id,
+        status: 'PENDING',
+        source: 'artificial_studio'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Check status
@@ -158,46 +88,40 @@ serve(async (req) => {
         throw new Error('taskId is required');
       }
 
-      // HF direct results are already complete
-      if (taskId.startsWith('hf_direct_')) {
+      // Check task status from database
+      const { data: task, error: taskError } = await supabase
+        .from('generation_tasks')
+        .select('*')
+        .eq('task_id', taskId)
+        .single();
+
+      if (taskError || !task) {
+        // If not in DB, check API directly
+        console.log('Task not in DB, returning pending status');
         return new Response(JSON.stringify({
-          status: 'SUCCEEDED',
-          progress: 100
+          status: 'IN_PROGRESS',
+          progress: 50
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
 
-      // Meshy task - poll for status
-      if (MESHY_KEY) {
-        const meshyResult = await tryMeshy('', MESHY_KEY, 'status', taskId);
-        if (meshyResult.success) {
-          const data = meshyResult.data;
-          const result: any = {
-            status: data.status,
-            progress: data.progress || 0,
-          };
+      const result: any = {
+        status: task.status,
+        progress: task.status === 'SUCCEEDED' ? 100 : task.status === 'FAILED' ? 0 : 50,
+      };
 
-          if (data.status === 'SUCCEEDED') {
-            result.model_urls = {
-              glb: data.model_urls?.glb,
-            };
-          }
-
-          if (data.status === 'FAILED') {
-            result.error = data.task_error?.message || 'Generation failed';
-          }
-
-          return new Response(JSON.stringify(result), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
-        }
+      if (task.status === 'SUCCEEDED' && task.model_url) {
+        result.model_urls = {
+          glb: task.model_url,
+        };
       }
 
-      return new Response(JSON.stringify({
-        status: 'IN_PROGRESS',
-        progress: 50
-      }), {
+      if (task.status === 'FAILED') {
+        result.error = task.error_message || 'Generation failed';
+      }
+
+      return new Response(JSON.stringify(result), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
