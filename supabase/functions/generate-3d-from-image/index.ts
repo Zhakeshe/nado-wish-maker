@@ -93,7 +93,7 @@ serve(async (req) => {
         .from('generation_tasks')
         .select('*')
         .eq('task_id', taskId)
-        .single();
+        .maybeSingle();
 
       if (taskError || !task) {
         // If not in DB, check API directly

@@ -41,6 +41,39 @@ export type Database = {
         }
         Relationships: []
       }
+      generation_tasks: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          image_url: string | null
+          model_url: string | null
+          status: string
+          task_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          image_url?: string | null
+          model_url?: string | null
+          status?: string
+          task_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          image_url?: string | null
+          model_url?: string | null
+          status?: string
+          task_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       objects_3d: {
         Row: {
           author_id: string | null
