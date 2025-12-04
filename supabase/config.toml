@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.generate-3d-from-image]
 verify_jwt = false
+
+[functions.3d-webhook]
+verify_jwt = false
