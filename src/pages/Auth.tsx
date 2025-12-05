@@ -15,8 +15,44 @@ const Auth = () => {
   const [fullName, setFullName] = useState("");
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [isLoading, setIsLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const handleForgotPassword = async () => {
+    if (!isValidEmail(email)) {
+      toast({
+        variant: "destructive",
+        title: "Қате",
+        description: "Email форматы дұрыс емес",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+
+    setIsLoading(false);
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Қате",
+        description: error.message,
+      });
+      return;
+    }
+
+    setResetEmailSent(true);
+    toast({
+      title: "Сілтеме жіберілді!",
+      description: "Поштаңызды тексеріңіз",
+    });
+  };
 
   useEffect(() => {
     const checkUser = async () => {
@@ -200,6 +236,67 @@ const Auth = () => {
     }
   };
 
+  // Forgot password modal
+  if (showForgotPassword) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center p-4 relative"
+        style={{
+          backgroundImage: `url(${backgroundImage})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      >
+        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
+        <Card className="w-full max-w-md relative z-10 bg-card/95 backdrop-blur border border-primary/20 shadow-elegant">
+          <CardHeader className="text-center space-y-2">
+            <CardTitle className="text-2xl font-bold">
+              {resetEmailSent ? "Сілтеме жіберілді!" : "Құпия сөзді қалпына келтіру"}
+            </CardTitle>
+            <CardDescription>
+              {resetEmailSent 
+                ? "Поштаңыздағы сілтемеге өтіңіз" 
+                : "Email енгізіңіз, сілтеме жібереміз"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {!resetEmailSent && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="reset-email">Email</Label>
+                  <Input
+                    id="reset-email"
+                    type="email"
+                    placeholder="name@mydomain.kz"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+                <Button 
+                  onClick={handleForgotPassword} 
+                  className="w-full" 
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Жүктеу..." : "Сілтеме жіберу"}
+                </Button>
+              </>
+            )}
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                setShowForgotPassword(false);
+                setResetEmailSent(false);
+              }}
+            >
+              Кіру бетіне оралу
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div
       className="min-h-screen flex items-center justify-center p-4 relative"
@@ -251,6 +348,14 @@ const Auth = () => {
               </div>
               <Button type="button" className="w-full" onClick={handleSignin} disabled={isLoading}>
                 {isLoading ? "Жүктеу..." : "Кіру"}
+              </Button>
+              <Button
+                type="button"
+                variant="link"
+                className="w-full text-sm"
+                onClick={() => setShowForgotPassword(true)}
+              >
+                Құпия сөзді ұмыттыңыз ба?
               </Button>
               <p className="text-xs text-muted-foreground text-center">
                 Email расталмаған болса, верификация бетіне өтесіз
