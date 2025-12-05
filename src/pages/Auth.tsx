@@ -110,10 +110,14 @@ const Auth = () => {
     });
 
     if (authError) {
+      let errorMessage = authError.message;
+      if (authError.message.includes("User already registered")) {
+        errorMessage = "Бұл email тіркелген! \"Кіру\" табын басыңыз.";
+      }
       toast({
         variant: "destructive",
         title: "Тіркелу сәтсіз",
-        description: authError.message,
+        description: errorMessage,
       });
       setIsLoading(false);
       return;
