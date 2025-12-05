@@ -5,8 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
   MapPin, Gamepad2, Trophy, Clock, Star, ArrowRight, 
-  Brain, Puzzle, History, Shuffle, Search, Image, 
-  Timer, Target, Lightbulb, Layers
+  Brain, History, Layers
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Link } from "react-router-dom";
@@ -267,7 +266,6 @@ const Games = () => {
       id: "find-on-map",
       ...t.games.findOnMap,
       icon: MapPin,
-      available: true,
       link: "/game",
       color: "primary",
     },
@@ -275,7 +273,6 @@ const Games = () => {
       id: "quiz",
       ...t.games.quiz,
       icon: Brain,
-      available: true,
       link: "/quiz",
       color: "secondary",
     },
@@ -283,80 +280,14 @@ const Games = () => {
       id: "memory",
       ...t.games.memory,
       icon: Layers,
-      available: false,
-      link: "#",
+      link: "/memory",
       color: "primary",
     },
     {
       id: "timeline",
       ...t.games.timeline,
       icon: History,
-      available: false,
-      link: "#",
-      color: "secondary",
-    },
-    {
-      id: "matching",
-      ...t.games.matching,
-      icon: Shuffle,
-      available: false,
-      link: "#",
-      color: "primary",
-    },
-    {
-      id: "wordSearch",
-      ...t.games.wordSearch,
-      icon: Search,
-      available: false,
-      link: "#",
-      color: "secondary",
-    },
-    {
-      id: "puzzle",
-      ...t.games.puzzle,
-      icon: Puzzle,
-      available: false,
-      link: "#",
-      color: "primary",
-    },
-    {
-      id: "trivia",
-      ...t.games.trivia,
-      icon: Lightbulb,
-      available: false,
-      link: "#",
-      color: "secondary",
-    },
-    {
-      id: "guessEra",
-      ...t.games.guessEra,
-      icon: Timer,
-      available: false,
-      link: "#",
-      color: "primary",
-    },
-    {
-      id: "fillBlanks",
-      ...t.games.fillBlanks,
-      icon: Target,
-      available: false,
-      link: "#",
-      color: "secondary",
-    },
-    {
-      id: "sortArtifacts",
-      ...t.games.sortArtifacts,
-      icon: Gamepad2,
-      available: false,
-      link: "#",
-      color: "primary",
-    },
-    {
-      id: "imageQuiz",
-      ...t.games.imageQuiz,
-      icon: Image,
-      available: false,
-      link: "#",
+      link: "/timeline",
       color: "secondary",
     },
   ];
@@ -387,27 +318,18 @@ const Games = () => {
           <div className="container mx-auto px-4">
             <h2 className="font-serif text-2xl font-bold mb-8">{t.availableGames}</h2>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {games.map((game) => (
                 <Card
                   key={game.id}
-                  className={`p-6 gradient-archaeology shadow-elegant border-2 ${
-                    game.available ? "border-primary/30 hover:shadow-gold" : "border-muted/30 opacity-70"
-                  } transition-all`}
+                  className="p-6 gradient-archaeology shadow-elegant border-2 border-primary/30 hover:shadow-gold transition-all"
                 >
                   <div className="flex items-start gap-4 mb-4">
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-${game.color}/10`}>
                       <game.icon className={`w-6 h-6 text-${game.color}`} />
                     </div>
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-serif text-lg font-bold">{game.title}</h3>
-                      </div>
-                      {!game.available && (
-                        <Badge variant="secondary" className="text-xs">
-                          {t.comingSoon}
-                        </Badge>
-                      )}
+                      <h3 className="font-serif text-lg font-bold">{game.title}</h3>
                     </div>
                   </div>
 
@@ -426,18 +348,12 @@ const Games = () => {
                     </Badge>
                   </div>
 
-                  {game.available ? (
-                    <Link to={game.link}>
-                      <Button className="w-full gap-2">
-                        {t.play}
-                        <ArrowRight className="w-4 h-4" />
-                      </Button>
-                    </Link>
-                  ) : (
-                    <Button disabled className="w-full gap-2">
-                      {t.comingSoon}
+                  <Link to={game.link}>
+                    <Button className="w-full gap-2">
+                      {t.play}
+                      <ArrowRight className="w-4 h-4" />
                     </Button>
-                  )}
+                  </Link>
                 </Card>
               ))}
             </div>
