@@ -26,7 +26,7 @@ const Auth = () => {
           .from("profiles")
           .select("is_verified")
           .eq("user_id", data.user.id)
-          .single();
+          .maybeSingle();
 
         if (profile?.is_verified) {
           navigate("/");
@@ -82,18 +82,27 @@ const Auth = () => {
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
+    const profilePayload = {
+      user_id: authData.user.id,
+      full_name: fullName,
+      verification_code: verificationCode,
+      code_expires_at: expiresAt.toISOString(),
+      last_resend_at: new Date().toISOString(),
+      is_verified: false,
+    };
+
     const { error: profileError } = await supabase
       .from("profiles")
-      .update({
-        verification_code: verificationCode,
-        code_expires_at: expiresAt.toISOString(),
-        last_resend_at: new Date().toISOString(),
-        is_verified: false,
-      })
-      .eq("user_id", authData.user.id);
+      .upsert(profilePayload, { onConflict: "user_id" });
 
     if (profileError) {
-      console.error("Profile update error:", profileError);
+      toast({
+        variant: "destructive",
+        title: "Профиль жаңартылмады",
+        description: profileError.message,
+      });
+      setIsLoading(false);
+      return;
     }
 
     const { error: emailError } = await supabase.functions.invoke("send-verification-email", {
@@ -160,7 +169,53 @@ const Auth = () => {
       .from("profiles")
       .select("is_verified")
       .eq("user_id", authData.user.id)
-      .single();
+      .maybeSingle();
+
+    if (!profile) {
+      const newCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+      const { error: profileCreateError } = await supabase
+        .from("profiles")
+        .upsert({
+          user_id: authData.user.id,
+          full_name: (authData.user.user_metadata as { full_name?: string })?.full_name ?? null,
+          verification_code: newCode,
+          code_expires_at: expiresAt.toISOString(),
+          last_resend_at: new Date().toISOString(),
+          is_verified: false,
+        }, { onConflict: "user_id" });
+
+      if (profileCreateError) {
+        toast({
+          variant: "destructive",
+          title: "Профиль табылмады",
+          description: profileCreateError.message,
+        });
+        return;
+      }
+
+      const { error: emailError } = await supabase.functions.invoke("send-verification-email", {
+        body: { email, code: newCode },
+      });
+
+      if (emailError) {
+        toast({
+          variant: "destructive",
+          title: "Email жіберілмеді",
+          description: emailError.message,
+        });
+        return;
+      }
+
+      toast({
+        title: "Профиль қалпына келтірілді",
+        description: "Жаңа верификациялық код жіберілді",
+      });
+
+      navigate("/verify-email");
+      return;
+    }
 
     if (profile?.is_verified) {
       toast({
