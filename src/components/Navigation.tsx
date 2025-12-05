@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Globe, User, Shield } from "lucide-react";
-import { getCurrentUser } from "@/lib/supabase";
 import { supabase } from "@/integrations/supabase/client";
 import {
   DropdownMenu,
@@ -68,27 +67,7 @@ export const Navigation = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const user = await getCurrentUser();
-      setIsAuthenticated(!!user);
-      
-      if (user) {
-        const { data: roleData } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", user.id)
-          .eq("role", "admin")
-          .maybeSingle();
-        
-        setIsAdmin(!!roleData);
-      } else {
-        setIsAdmin(false);
-      }
-    };
-    
-    checkAuth();
-    
-    // Listen for auth state changes
+    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setIsAuthenticated(!!session?.user);
       if (!session?.user) {
@@ -104,6 +83,20 @@ export const Navigation = () => {
             .maybeSingle()
             .then(({ data }) => setIsAdmin(!!data));
         }, 0);
+      }
+    });
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsAuthenticated(!!session?.user);
+      if (session?.user) {
+        supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", session.user.id)
+          .eq("role", "admin")
+          .maybeSingle()
+          .then(({ data }) => setIsAdmin(!!data));
       }
     });
     
