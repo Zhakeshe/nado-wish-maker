@@ -212,10 +212,16 @@ const Auth = () => {
     setIsLoading(false);
 
     if (authError) {
+      let errorMessage = authError.message;
+      if (authError.message.includes("Invalid login credentials")) {
+        errorMessage = "Email немесе құпия сөз қате. Құпия сөзді тексеріңіз немесе 'Құпия сөзді ұмыттыңыз ба?' басыңыз.";
+      } else if (authError.message.includes("Email not confirmed")) {
+        errorMessage = "Email расталмаған. Поштаңызды тексеріңіз.";
+      }
       toast({
         variant: "destructive",
         title: "Кіру сәтсіз",
-        description: authError.message,
+        description: errorMessage,
       });
       return;
     }
