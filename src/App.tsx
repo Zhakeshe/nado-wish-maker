@@ -9,6 +9,8 @@ import Projects from "./pages/Projects";
 import Games from "./pages/Games";
 import Game from "./pages/Game";
 import Quiz from "./pages/Quiz";
+import MemoryGame from "./pages/MemoryGame";
+import TimelineGame from "./pages/TimelineGame";
 import About from "./pages/About";
 import News from "./pages/News";
 import Map from "./pages/Map";
@@ -45,6 +47,8 @@ const App = () => (
             <Route path="/games" element={<Games />} />
             <Route path="/game" element={<Game />} />
             <Route path="/quiz" element={<Quiz />} />
+            <Route path="/memory" element={<MemoryGame />} />
+            <Route path="/timeline" element={<TimelineGame />} />
             <Route path="/map" element={<Map />} />
             <Route path="/projects" element={<Projects />} />
             <Route path="/viewer/:id?" element={<Viewer />} />
