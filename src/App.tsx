@@ -41,15 +41,17 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
             
+            {/* Public game routes - accessible to everyone */}
+            <Route path="/games" element={<Games />} />
+            <Route path="/game" element={<Game />} />
+            <Route path="/quiz" element={<Quiz />} />
+            <Route path="/map" element={<Map />} />
+            <Route path="/projects" element={<Projects />} />
+            <Route path="/viewer/:id?" element={<Viewer />} />
+            
             {/* Protected Routes - Require Email Verification */}
-            <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
-            <Route path="/games" element={<ProtectedRoute><Games /></ProtectedRoute>} />
-            <Route path="/game" element={<ProtectedRoute><Game /></ProtectedRoute>} />
-            <Route path="/quiz" element={<ProtectedRoute><Quiz /></ProtectedRoute>} />
-            <Route path="/map" element={<ProtectedRoute><Map /></ProtectedRoute>} />
             <Route path="/forum" element={<ProtectedRoute><Forum /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-            <Route path="/viewer/:id?" element={<ProtectedRoute><Viewer /></ProtectedRoute>} />
             <Route path="/upload-3d" element={<ProtectedRoute><Upload3D /></ProtectedRoute>} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
