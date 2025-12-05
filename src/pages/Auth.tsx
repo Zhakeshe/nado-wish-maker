@@ -129,25 +129,35 @@ const Auth = () => {
       return;
     }
 
-    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+    // Use secure RPC function to create verification code server-side
+    const { data: codeData, error: codeError } = await supabase.rpc('create_verification_code');
 
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .update({
-        verification_code: verificationCode,
-        code_expires_at: expiresAt.toISOString(),
-        last_resend_at: new Date().toISOString(),
-        is_verified: false,
-      })
-      .eq("user_id", authData.user.id);
+    if (codeError) {
+      console.error("Verification code creation error:", codeError);
+      toast({
+        variant: "destructive",
+        title: "Қате",
+        description: "Верификация коды жасалмады",
+      });
+      setIsLoading(false);
+      return;
+    }
 
-    if (profileError) {
-      console.error("Profile update error:", profileError);
+    const codeResult = codeData as { success: boolean; code?: string; error?: string };
+
+    if (!codeResult.success || !codeResult.code) {
+      console.error("Verification code creation failed:", codeResult.error);
+      toast({
+        variant: "destructive",
+        title: "Қате",
+        description: codeResult.error || "Верификация коды жасалмады",
+      });
+      setIsLoading(false);
+      return;
     }
 
     const { error: emailError } = await supabase.functions.invoke("send-verification-email", {
-      body: { email: email.trim().toLowerCase(), code: verificationCode },
+      body: { email: email.trim().toLowerCase(), code: codeResult.code },
     });
 
     setIsLoading(false);
