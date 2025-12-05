@@ -443,6 +443,8 @@ const Game = () => {
                   <MapboxMap 
                     markers={regionMarkers}
                     onMarkerClick={handleMarkerClick}
+                    language={language}
+                    gameMode={true}
                   />
                 </Card>
               </div>

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import { MapPin, Eye, ExternalLink } from "lucide-react";
+import { MapPin } from "lucide-react";
 import type { RegionMarker } from "@/utils/regionMarkers";
 import { archaeologicalObjects, ArchaeologicalObject } from "@/data/archaeologicalObjects";
 
@@ -37,14 +37,21 @@ interface MapboxMapProps {
   language?: 'ru' | 'kz' | 'en';
   objectCounts?: Record<string, number>;
   showObjects?: boolean;
+  gameMode?: boolean;
 }
 
-const MapboxMap = ({ markers = [], onMarkerClick, language = 'kz', objectCounts = {}, showObjects = true }: MapboxMapProps) => {
+const MapboxMap = ({ 
+  markers = [], 
+  onMarkerClick, 
+  language = 'kz', 
+  objectCounts = {}, 
+  showObjects = true,
+  gameMode = false 
+}: MapboxMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
   const [isMapReady, setIsMapReady] = useState(false);
-  const [selectedObject, setSelectedObject] = useState<ArchaeologicalObject | null>(null);
   const initRef = useRef(false);
 
   const countsKey = useMemo(() => JSON.stringify(objectCounts), [objectCounts]);
@@ -70,6 +77,19 @@ const MapboxMap = ({ markers = [], onMarkerClick, language = 'kz', objectCounts 
     })),
   }), [language]);
 
+  // Convert normalized x,y to lng,lat
+  const normalizedToLngLat = (x: number, y: number): [number, number] => {
+    const minLon = 46;
+    const maxLon = 88;
+    const minLat = 40;
+    const maxLat = 56;
+    
+    const lng = minLon + (x / 1000) * (maxLon - minLon);
+    const lat = maxLat - (y / 620) * (maxLat - minLat);
+    
+    return [lng, lat];
+  };
+
   useEffect(() => {
     if (!mapContainer.current || initRef.current) return;
     initRef.current = true;
@@ -92,7 +112,53 @@ const MapboxMap = ({ markers = [], onMarkerClick, language = 'kz', objectCounts 
     map.current.on("load", () => {
       setIsMapReady(true);
       
-      if (showObjects && map.current) {
+      // In game mode, show region markers for clicking
+      if (gameMode && markers.length > 0 && onMarkerClick) {
+        markers.forEach((marker) => {
+          const [lng, lat] = normalizedToLngLat(marker.x, marker.y);
+          
+          // Create custom marker element
+          const el = document.createElement('div');
+          el.className = 'region-marker';
+          el.style.cssText = `
+            background: linear-gradient(135deg, #E33E64, #D4A574);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            border: 2px solid white;
+            transition: transform 0.2s, box-shadow 0.2s;
+            white-space: nowrap;
+          `;
+          el.textContent = marker.label;
+          
+          el.addEventListener('mouseenter', () => {
+            el.style.transform = 'scale(1.1)';
+            el.style.boxShadow = '0 6px 20px rgba(227, 62, 100, 0.4)';
+          });
+          
+          el.addEventListener('mouseleave', () => {
+            el.style.transform = 'scale(1)';
+            el.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+          });
+          
+          el.addEventListener('click', () => {
+            onMarkerClick(marker);
+          });
+          
+          const mapMarker = new mapboxgl.Marker({ element: el })
+            .setLngLat([lng, lat])
+            .addTo(map.current!);
+          
+          markersRef.current.push(mapMarker);
+        });
+      }
+      
+      // In non-game mode, show clustered objects
+      if (!gameMode && showObjects && map.current) {
         // Add source for clustering
         map.current.addSource('objects', {
           type: 'geojson',
@@ -182,8 +248,6 @@ const MapboxMap = ({ markers = [], onMarkerClick, language = 'kz', objectCounts 
           
           const obj = archaeologicalObjects.find(o => o.id === props?.id);
           if (obj) {
-            setSelectedObject(obj);
-            
             const name = language === 'kz' ? obj.nameKz : language === 'en' ? obj.nameEn : obj.name;
             const desc = language === 'kz' ? obj.descriptionKz : language === 'en' ? obj.descriptionEn : obj.description;
             const era = language === 'kz' ? obj.eraKz : language === 'en' ? obj.eraEn : obj.era;
@@ -238,13 +302,13 @@ const MapboxMap = ({ markers = [], onMarkerClick, language = 'kz', objectCounts 
 
   // Update GeoJSON source when language changes
   useEffect(() => {
-    if (isMapReady && map.current && showObjects) {
+    if (isMapReady && map.current && showObjects && !gameMode) {
       const source = map.current.getSource('objects') as mapboxgl.GeoJSONSource;
       if (source) {
         source.setData(objectsGeoJSON);
       }
     }
-  }, [objectsGeoJSON, isMapReady, showObjects]);
+  }, [objectsGeoJSON, isMapReady, showObjects, gameMode]);
 
   const translations = {
     ru: {
@@ -252,18 +316,21 @@ const MapboxMap = ({ markers = [], onMarkerClick, language = 'kz', objectCounts 
       regions: "областей",
       objectCount: "Объекты",
       zoomIn: "Приблизьте для деталей",
+      clickRegion: "Нажмите на регион",
     },
     kz: {
       mapTitle: "Қазақстан картасы",
       regions: "облыс",
       objectCount: "Объектілер",
       zoomIn: "Толық көру үшін жақындатыңыз",
+      clickRegion: "Өңірді басыңыз",
     },
     en: {
       mapTitle: "Map of Kazakhstan",
       regions: "regions",
       objectCount: "Objects",
       zoomIn: "Zoom in for details",
+      clickRegion: "Click on a region",
     },
   };
 
@@ -281,19 +348,23 @@ const MapboxMap = ({ markers = [], onMarkerClick, language = 'kz', objectCounts 
           <div className="flex items-center gap-2">
             <MapPin className="w-4 h-4" />
             <span>
-              {t.mapTitle} · {archaeologicalObjects.length} {t.objectCount.toLowerCase()}
+              {t.mapTitle} {!gameMode && `· ${archaeologicalObjects.length} ${t.objectCount.toLowerCase()}`}
             </span>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-primary"></div>
-              <span>{language === 'kz' ? 'Кластер' : language === 'ru' ? 'Кластер' : 'Cluster'}</span>
+          {gameMode ? (
+            <div className="text-primary font-medium">{t.clickRegion}</div>
+          ) : (
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-primary"></div>
+                <span>{language === 'kz' ? 'Кластер' : language === 'ru' ? 'Кластер' : 'Cluster'}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-[#E33E64]"></div>
+                <span>{language === 'kz' ? 'Объект' : language === 'ru' ? 'Объект' : 'Object'}</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-[#E33E64]"></div>
-              <span>{language === 'kz' ? 'Объект' : language === 'ru' ? 'Объект' : 'Object'}</span>
-            </div>
-          </div>
+          )}
         </div>
       )}
     </div>
