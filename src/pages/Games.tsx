@@ -112,8 +112,8 @@ const Games = () => {
       id: "quiz",
       ...t.quiz,
       icon: Trophy,
-      available: false,
-      link: "#",
+      available: true,
+      link: "/quiz",
       color: "secondary",
     },
     {
