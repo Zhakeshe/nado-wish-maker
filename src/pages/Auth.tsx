@@ -219,66 +219,80 @@ const Auth = () => {
 
     setIsLoading(true);
 
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    setIsLoading(false);
-
-    if (authError) {
-      let errorMessage = authError.message;
-      if (authError.message.includes("Invalid login credentials")) {
-        errorMessage = "Email немесе құпия сөз қате. Құпия сөзді тексеріңіз немесе 'Құпия сөзді ұмыттыңыз ба?' басыңыз.";
-      } else if (authError.message.includes("Email not confirmed")) {
-        errorMessage = "Email расталмаған. Поштаңызды тексеріңіз.";
-      }
-      toast({
-        variant: "destructive",
-        title: "Кіру сәтсіз",
-        description: errorMessage,
+    try {
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
-      return;
-    }
 
-    if (!authData.user) {
+      if (authError) {
+        setIsLoading(false);
+        let errorMessage = authError.message;
+        if (authError.message.includes("Invalid login credentials")) {
+          errorMessage = "Email немесе құпия сөз қате. Құпия сөзді тексеріңіз немесе 'Құпия сөзді ұмыттыңыз ба?' басыңыз.";
+        } else if (authError.message.includes("Email not confirmed")) {
+          errorMessage = "Email расталмаған. Поштаңызды тексеріңіз.";
+        }
+        toast({
+          variant: "destructive",
+          title: "Кіру сәтсіз",
+          description: errorMessage,
+        });
+        return;
+      }
+
+      if (!authData.user) {
+        setIsLoading(false);
+        toast({
+          variant: "destructive",
+          title: "Қате",
+          description: "Пайдаланушы табылмады",
+        });
+        return;
+      }
+
+      // Wait for session to be fully established
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("is_verified")
+        .eq("user_id", authData.user.id)
+        .single();
+
+      setIsLoading(false);
+
+      if (profileError) {
+        console.error("Profile fetch error:", profileError);
+        toast({
+          title: "Email расталмаған",
+          description: "Алдымен email растау керек",
+        });
+        navigate("/verify-email");
+        return;
+      }
+
+      if (profile?.is_verified) {
+        toast({
+          title: "Кіру сәтті!",
+          description: "Жүйеге кірдіңіз",
+        });
+        navigate("/");
+      } else {
+        toast({
+          title: "Email расталмаған",
+          description: "Алдымен email растау керек",
+        });
+        navigate("/verify-email");
+      }
+    } catch (err) {
+      setIsLoading(false);
+      console.error("Login error:", err);
       toast({
         variant: "destructive",
         title: "Қате",
-        description: "Пайдаланушы табылмады",
+        description: "Жүйеге кіру кезінде қате шықты",
       });
-      return;
-    }
-
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("is_verified")
-      .eq("user_id", authData.user.id)
-      .single();
-
-    if (profileError) {
-      console.error("Profile fetch error:", profileError);
-      // Navigate to verify-email if profile not found
-      toast({
-        title: "Email расталмаған",
-        description: "Алдымен email растау керек",
-      });
-      navigate("/verify-email");
-      return;
-    }
-
-    if (profile?.is_verified) {
-      toast({
-        title: "Кіру сәтті!",
-        description: "Жүйеге кірдіңіз",
-      });
-      navigate("/");
-    } else {
-      toast({
-        title: "Email расталмаған",
-        description: "Алдымен email растау керек",
-      });
-      navigate("/verify-email");
     }
   };
 
