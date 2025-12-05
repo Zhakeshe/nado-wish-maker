@@ -243,29 +243,18 @@ export type Database = {
       }
     }
     Views: {
-      leaderboard_view: {
-        Row: {
-          avatar_url: string | null
-          full_name: string | null
-          id: string | null
-          points: number | null
-        }
-        Insert: {
-          avatar_url?: string | null
-          full_name?: string | null
-          id?: string | null
-          points?: number | null
-        }
-        Update: {
-          avatar_url?: string | null
-          full_name?: string | null
-          id?: string | null
-          points?: number | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
+      get_leaderboard: {
+        Args: { limit_count?: number }
+        Returns: {
+          avatar_url: string
+          full_name: string
+          id: string
+          points: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

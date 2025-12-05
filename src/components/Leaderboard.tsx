@@ -29,10 +29,7 @@ export const Leaderboard = () => {
     else setLoading(true);
 
     const { data, error } = await supabase
-      .from("leaderboard_view")
-      .select("id, full_name, points")
-      .order("points", { ascending: false })
-      .limit(10);
+      .rpc("get_leaderboard", { limit_count: 10 });
 
     if (!error && data) {
       setUsers(data);
