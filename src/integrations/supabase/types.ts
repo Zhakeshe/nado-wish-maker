@@ -241,6 +241,30 @@ export type Database = {
         }
         Relationships: []
       }
+      verification_codes: {
+        Row: {
+          code: string
+          created_at: string
+          expires_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -250,6 +274,7 @@ export type Database = {
         Args: { action_type: string; description_text?: string }
         Returns: Json
       }
+      create_verification_code: { Args: never; Returns: Json }
       get_leaderboard: {
         Args: { limit_count?: number }
         Returns: {
@@ -267,6 +292,7 @@ export type Database = {
         Returns: boolean
       }
       is_user_verified: { Args: { user_id_param: string }; Returns: boolean }
+      verify_email_code: { Args: { code_input: string }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Mail, CheckCircle2, AlertCircle, ArrowLeft, Edit2 } from "lucide-react";
+import { Mail, CheckCircle2, AlertCircle, Edit2 } from "lucide-react";
 import backgroundImage from "@/assets/background-petroglyphs.png";
 
 const RESEND_SECONDS = 60;
@@ -72,59 +72,47 @@ const VerifyEmail = () => {
       return;
     }
 
-    const { data: profile, error: fetchError } = await supabase
-      .from("profiles")
-      .select("verification_code, code_expires_at")
-      .eq("user_id", user.id)
-      .single();
-
-    if (fetchError || !profile) {
-      toast({ 
-        variant: "destructive", 
-        title: "Қате", 
-        description: "Профиль табылмады" 
-      });
-      setIsVerifying(false);
-      return;
-    }
-
-    if (profile.verification_code !== code) {
-      toast({ 
-        variant: "destructive", 
-        title: "Қате код", 
-        description: "Дұрыс емес верификациялық код" 
-      });
-      setIsVerifying(false);
-      return;
-    }
-
-    const expiresAt = new Date(profile.code_expires_at);
-    if (expiresAt < new Date()) {
-      toast({ 
-        variant: "destructive", 
-        title: "Код өткен", 
-        description: "Кодтың мерзімі өтті. Жаңа код жіберіңіз" 
-      });
-      setIsVerifying(false);
-      return;
-    }
-
-    const { error: updateError } = await supabase
-      .from("profiles")
-      .update({ 
-        is_verified: true, 
-        verification_code: null,
-        code_expires_at: null 
-      })
-      .eq("user_id", user.id);
+    // Use secure RPC function to verify code server-side
+    const { data, error } = await supabase.rpc('verify_email_code', {
+      code_input: code
+    });
 
     setIsVerifying(false);
 
-    if (updateError) {
+    if (error) {
       toast({ 
         variant: "destructive", 
         title: "Қате", 
-        description: updateError.message 
+        description: error.message 
+      });
+      return;
+    }
+
+    const result = data as { success: boolean; error?: string };
+
+    if (!result.success) {
+      let errorMessage = "Белгісіз қате";
+      switch (result.error) {
+        case 'Not authenticated':
+          errorMessage = "Авторизация қажет";
+          navigate("/auth");
+          return;
+        case 'No verification code found':
+          errorMessage = "Верификациялық код табылмады. Жаңа код сұраңыз";
+          break;
+        case 'Code has expired':
+          errorMessage = "Кодтың мерзімі өтті. Жаңа код жіберіңіз";
+          break;
+        case 'Invalid code':
+          errorMessage = "Дұрыс емес верификациялық код";
+          break;
+        default:
+          errorMessage = result.error || "Белгісіз қате";
+      }
+      toast({ 
+        variant: "destructive", 
+        title: "Қате", 
+        description: errorMessage 
       });
       return;
     }
@@ -146,52 +134,36 @@ const VerifyEmail = () => {
       return;
     }
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("last_resend_at")
-      .eq("user_id", user.id)
-      .single();
+    // Use secure RPC function to create verification code server-side
+    const { data, error } = await supabase.rpc('create_verification_code');
 
-    if (profile?.last_resend_at) {
-      const lastResend = new Date(profile.last_resend_at);
-      const now = new Date();
-      const diffSeconds = (now.getTime() - lastResend.getTime()) / 1000;
-      
-      if (diffSeconds < RESEND_SECONDS) {
-        toast({ 
-          variant: "destructive", 
-          title: "Тым жиі", 
-          description: `Күтіңіз ${Math.ceil(RESEND_SECONDS - diffSeconds)} секунд` 
-        });
-        setIsResending(false);
-        return;
-      }
-    }
-
-    const newCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
-
-    const { error: updateError } = await supabase
-      .from("profiles")
-      .update({
-        verification_code: newCode,
-        code_expires_at: expiresAt.toISOString(),
-        last_resend_at: new Date().toISOString(),
-      })
-      .eq("user_id", user.id);
-
-    if (updateError) {
+    if (error) {
       toast({ 
         variant: "destructive", 
         title: "Қате", 
-        description: updateError.message 
+        description: error.message 
       });
       setIsResending(false);
       return;
     }
 
+    const result = data as { success: boolean; code?: string; error?: string };
+
+    if (!result.success) {
+      toast({ 
+        variant: "destructive", 
+        title: "Қате", 
+        description: result.error === 'Please wait before requesting a new code' 
+          ? "Тым жиі. Біраз күтіңіз" 
+          : result.error || "Белгісіз қате"
+      });
+      setIsResending(false);
+      return;
+    }
+
+    // Send the code via email
     const { error: emailError } = await supabase.functions.invoke("send-verification-email", {
-      body: { email: (user.email || "").trim().toLowerCase(), code: newCode },
+      body: { email: (user.email || "").trim().toLowerCase(), code: result.code },
     });
 
     setIsResending(false);
@@ -215,7 +187,6 @@ const VerifyEmail = () => {
   const isResendDisabled = isResending || secondsLeft > 0;
 
   const handleChangeEmail = async () => {
-    // Sign out current user and redirect to auth page
     await supabase.auth.signOut();
     toast({
       title: "Шығу сәтті",
