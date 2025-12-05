@@ -74,12 +74,36 @@ export const Navigation = () => {
           .select("role")
           .eq("user_id", user.id)
           .eq("role", "admin")
-          .single();
+          .maybeSingle();
         
         setIsAdmin(!!roleData);
+      } else {
+        setIsAdmin(false);
       }
     };
+    
     checkAuth();
+    
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session?.user);
+      if (!session?.user) {
+        setIsAdmin(false);
+      } else {
+        // Check admin role after auth change
+        setTimeout(() => {
+          supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", session.user.id)
+            .eq("role", "admin")
+            .maybeSingle()
+            .then(({ data }) => setIsAdmin(!!data));
+        }, 0);
+      }
+    });
+    
+    return () => subscription.unsubscribe();
   }, []);
 
   const t = translations[language];
