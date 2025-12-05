@@ -304,45 +304,45 @@ const Index = () => {
         </section>
 
         {/* Points System CTA */}
-        <section className="py-20 bg-muted">
+        <section className="py-12 sm:py-20 bg-muted">
           <div className="container mx-auto px-4">
-            <div className="grid lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
-              <Card className="relative overflow-hidden p-8 md:p-12 text-center gradient-card shadow-elegant bg-card border-border">
-                <div className="absolute top-0 right-0 w-64 h-64 gradient-soft rounded-full blur-3xl opacity-50" />
-                <div className="absolute bottom-0 left-0 w-64 h-64 gradient-soft rounded-full blur-3xl opacity-50" />
+            <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 max-w-6xl mx-auto">
+              <Card className="relative overflow-hidden p-6 sm:p-8 md:p-12 text-center gradient-card shadow-elegant bg-card border-border">
+                <div className="absolute top-0 right-0 w-32 sm:w-64 h-32 sm:h-64 gradient-soft rounded-full blur-3xl opacity-50" />
+                <div className="absolute bottom-0 left-0 w-32 sm:w-64 h-32 sm:h-64 gradient-soft rounded-full blur-3xl opacity-50" />
                 
                 <div className="relative z-10">
-                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Upload className="w-8 h-8 text-primary" />
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                    <Upload className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
                   </div>
                   
-                  <h2 className="font-sans text-2xl md:text-3xl font-bold mb-4 text-primary text-glow-pink">
+                  <h2 className="font-sans text-xl sm:text-2xl md:text-3xl font-bold mb-3 sm:mb-4 text-primary text-glow-pink">
                     {t.contributeTitle}
                   </h2>
-                  <p className="text-base text-muted-foreground mb-6 max-w-lg mx-auto">
+                  <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-6 max-w-lg mx-auto">
                     {t.contributeDescription}
                   </p>
                   
-                  <div className="grid grid-cols-2 gap-4 mb-6">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-primary text-glow-pink mb-1">10</div>
-                      <div className="text-xs text-muted-foreground">{t.forRegistration}</div>
+                      <div className="text-xl sm:text-2xl font-bold text-primary text-glow-pink mb-1">10</div>
+                      <div className="text-[10px] sm:text-xs text-muted-foreground">{t.forRegistration}</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-primary text-glow-pink mb-1">50</div>
-                      <div className="text-xs text-muted-foreground">{t.forProject}</div>
+                      <div className="text-xl sm:text-2xl font-bold text-primary text-glow-pink mb-1">50</div>
+                      <div className="text-[10px] sm:text-xs text-muted-foreground">{t.forProject}</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-secondary text-glow-yellow mb-1">5-15</div>
-                      <div className="text-xs text-muted-foreground">{t.forGame}</div>
+                      <div className="text-xl sm:text-2xl font-bold text-secondary text-glow-yellow mb-1">5-15</div>
+                      <div className="text-[10px] sm:text-xs text-muted-foreground">{t.forGame}</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-primary text-glow-pink mb-1">20</div>
-                      <div className="text-xs text-muted-foreground">{t.forArticle}</div>
+                      <div className="text-xl sm:text-2xl font-bold text-primary text-glow-pink mb-1">20</div>
+                      <div className="text-[10px] sm:text-xs text-muted-foreground">{t.forArticle}</div>
                     </div>
                   </div>
                   
-                  <Button size="lg" className="gap-2" asChild>
+                  <Button size="lg" className="gap-2 w-full sm:w-auto" asChild>
                     <Link to="/auth">
                       {t.join}
                       <ArrowRight className="w-5 h-5" />

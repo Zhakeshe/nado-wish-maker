@@ -72,10 +72,10 @@ export const Leaderboard = () => {
   }
 
   return (
-    <Card className="p-6 bg-card border-border shadow-card">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xl font-bold flex items-center gap-2 text-foreground">
-          <Trophy className="w-5 h-5 text-primary" />
+    <Card className="p-4 sm:p-6 bg-card border-border shadow-card">
+      <div className="flex items-center justify-between mb-3 sm:mb-4">
+        <h3 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-foreground">
+          <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
           {t.title}
         </h3>
         <Button
@@ -83,28 +83,28 @@ export const Leaderboard = () => {
           size="sm"
           onClick={() => fetchLeaderboard(true)}
           disabled={refreshing}
-          className="gap-1 text-muted-foreground hover:text-foreground"
+          className="gap-1 text-muted-foreground hover:text-foreground text-xs sm:text-sm px-2 sm:px-3"
         >
-          <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
-          {t.refresh}
+          <RefreshCw className={`w-3 h-3 sm:w-4 sm:h-4 ${refreshing ? "animate-spin" : ""}`} />
+          <span className="hidden sm:inline">{t.refresh}</span>
         </Button>
       </div>
       <div className="space-y-2">
         {users.map((user, index) => (
           <div
             key={user.id}
-            className={`flex items-center gap-3 p-3 rounded-lg border transition-all duration-300 hover:scale-[1.02] hover:shadow-md animate-fade-in ${getRankBg(index)}`}
+            className={`flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg border transition-all duration-300 hover:scale-[1.02] hover:shadow-md animate-fade-in ${getRankBg(index)}`}
             style={{ animationDelay: `${index * 50}ms` }}
           >
             <div className="flex-shrink-0">{getRankIcon(index)}</div>
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-foreground truncate">
+              <p className="font-medium text-foreground truncate text-sm sm:text-base">
                 {user.full_name || t.anonymous}
               </p>
             </div>
             <div className="flex-shrink-0 text-right">
-              <span className="font-bold text-primary">{user.points}</span>
-              <span className="text-xs text-muted-foreground ml-1">{t.points}</span>
+              <span className="font-bold text-primary text-sm sm:text-base">{user.points}</span>
+              <span className="text-[10px] sm:text-xs text-muted-foreground ml-1">{t.points}</span>
             </div>
           </div>
         ))}
