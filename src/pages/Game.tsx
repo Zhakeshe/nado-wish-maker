@@ -19,6 +19,7 @@ const GAME_TIME_SECONDS = 90; // 1.5 minutes
 const Game = () => {
   const [currentObjectIndex, setCurrentObjectIndex] = useState(0);
   const [selectedRegion, setSelectedRegion] = useState("");
+  const [selectedRegionId, setSelectedRegionId] = useState("");
   const [score, setScore] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [totalAttempts, setTotalAttempts] = useState(0);
@@ -73,6 +74,7 @@ const Game = () => {
     setTotalAttempts(0);
     setCurrentObjectIndex(0);
     setSelectedRegion("");
+    setSelectedRegionId("");
     setShowResult(false);
   };
 
@@ -94,7 +96,7 @@ const Game = () => {
       return;
     }
 
-    const correct = selectedRegion === resolveRegionId(currentObject.region);
+    const correct = selectedRegionId === resolveRegionId(currentObject.region);
     setIsCorrect(correct);
     setShowResult(true);
     setTotalAttempts(prev => prev + 1);
@@ -103,6 +105,8 @@ const Game = () => {
       const points = currentObject.points;
       setScore(prev => prev + points);
       setCorrectAnswers(prev => prev + 1);
+      // Add 40 seconds for correct answer
+      setTimeLeft(prev => prev + 40);
 
       if (user) {
         try {
@@ -155,6 +159,7 @@ const Game = () => {
 
   const handleMarkerClick = useCallback((marker: any) => {
     setSelectedRegion(marker.label);
+    setSelectedRegionId(marker.regionId);
     setShowResult(false);
     toast({
       title: marker.label,
@@ -167,6 +172,7 @@ const Game = () => {
     if (currentObjectIndex < archaeologicalObjects.length - 1) {
       setCurrentObjectIndex(prev => prev + 1);
       setSelectedRegion("");
+      setSelectedRegionId("");
       setShowResult(false);
       setIsCorrect(false);
     } else {
