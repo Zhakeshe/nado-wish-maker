@@ -25,6 +25,16 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
+    // Extract user_id from JWT token
+    const authHeader = req.headers.get('Authorization');
+    let userId: string | null = null;
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user } } = await supabase.auth.getUser(token);
+      userId = user?.id || null;
+    }
+    console.log('User ID from JWT:', userId);
+
     // Create task
     if (action === 'create') {
       if (!imageUrl) {
@@ -67,6 +77,7 @@ serve(async (req) => {
           task_id: data.id,
           status: 'PENDING',
           image_url: imageUrl,
+          user_id: userId,
         });
 
       if (dbError) {
