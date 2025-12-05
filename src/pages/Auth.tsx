@@ -250,11 +250,22 @@ const Auth = () => {
       return;
     }
 
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("is_verified")
       .eq("user_id", authData.user.id)
       .single();
+
+    if (profileError) {
+      console.error("Profile fetch error:", profileError);
+      // Navigate to verify-email if profile not found
+      toast({
+        title: "Email расталмаған",
+        description: "Алдымен email растау керек",
+      });
+      navigate("/verify-email");
+      return;
+    }
 
     if (profile?.is_verified) {
       toast({
