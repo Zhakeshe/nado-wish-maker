@@ -4,13 +4,14 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Star, Target, Award, CheckCircle, XCircle, Clock, Play, Brain } from "lucide-react";
+import { Trophy, Star, Target, Award, CheckCircle, XCircle, Clock, Play, Brain, RotateCcw, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const QUIZ_TIME_SECONDS = 300; // 5 minutes
+const QUESTIONS_PER_LEVEL = 10;
 
 interface QuizQuestion {
   id: number;
@@ -496,11 +497,15 @@ const Quiz = () => {
   const [timeLeft, setTimeLeft] = useState(QUIZ_TIME_SECONDS);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>(allQuizQuestions);
+  const [currentLevel, setCurrentLevel] = useState(1);
+  const [showLevelComplete, setShowLevelComplete] = useState(false);
   const { toast } = useToast();
   const { language } = useLanguage();
 
   const currentQuestion = quizQuestions[currentQuestionIndex];
   const accuracy = totalAttempts > 0 ? Math.round((correctAnswers / totalAttempts) * 100) : 0;
+  const questionsInLevel = Math.min(QUESTIONS_PER_LEVEL, quizQuestions.length);
+  const levelProgress = ((currentQuestionIndex % questionsInLevel) + 1) / questionsInLevel * 100;
 
   useEffect(() => {
     checkUser();
@@ -508,7 +513,7 @@ const Quiz = () => {
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    if (isTimerRunning && timeLeft > 0) {
+    if (isTimerRunning && timeLeft > 0 && !showLevelComplete) {
       interval = setInterval(() => {
         setTimeLeft((prev) => prev - 1);
       }, 1000);
@@ -522,7 +527,7 @@ const Quiz = () => {
       setGameStarted(false);
     }
     return () => clearInterval(interval);
-  }, [isTimerRunning, timeLeft, score, language, toast]);
+  }, [isTimerRunning, timeLeft, score, language, toast, showLevelComplete]);
 
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -540,6 +545,22 @@ const Quiz = () => {
     setCurrentQuestionIndex(0);
     setSelectedOption(null);
     setShowResult(false);
+    setCurrentLevel(1);
+    setShowLevelComplete(false);
+  };
+
+  const continueToNextLevel = () => {
+    setQuizQuestions(shuffleArray(allQuizQuestions));
+    setCurrentQuestionIndex(0);
+    setSelectedOption(null);
+    setShowResult(false);
+    setCurrentLevel(prev => prev + 1);
+    setShowLevelComplete(false);
+    setTimeLeft(prev => prev + 60); // Bonus time for next level
+    toast({
+      title: language === 'ru' ? `Уровень ${currentLevel + 1}!` : language === 'kz' ? `${currentLevel + 1}-деңгей!` : `Level ${currentLevel + 1}!`,
+      description: language === 'ru' ? "+60 секунд бонус" : language === 'kz' ? "+60 секунд бонус" : "+60 seconds bonus",
+    });
   };
 
   const formatTime = (seconds: number) => {
@@ -614,18 +635,19 @@ const Quiz = () => {
   };
 
   const nextQuestion = () => {
-    if (currentQuestionIndex < quizQuestions.length - 1) {
-      setCurrentQuestionIndex(prev => prev + 1);
+    const nextIndex = currentQuestionIndex + 1;
+    const isLevelComplete = (nextIndex % QUESTIONS_PER_LEVEL === 0) || nextIndex >= quizQuestions.length;
+    
+    if (isLevelComplete) {
+      setShowLevelComplete(true);
       setSelectedOption(null);
       setShowResult(false);
       setIsCorrect(false);
     } else {
-      setIsTimerRunning(false);
-      toast({
-        title: language === 'ru' ? "Квиз завершен!" : language === 'kz' ? "Квиз аяқталды!" : "Quiz completed!",
-        description: language === 'ru' ? `Итоговый счёт: ${score}` : language === 'kz' ? `Жалпы ұпай: ${score}` : `Final score: ${score}`,
-      });
-      setGameStarted(false);
+      setCurrentQuestionIndex(nextIndex);
+      setSelectedOption(null);
+      setShowResult(false);
+      setIsCorrect(false);
     }
   };
 
@@ -638,14 +660,19 @@ const Quiz = () => {
       accuracy: "Точность",
       correct: "Верно",
       check: "Проверить",
-      next: "Следующий вопрос",
+      next: "Дальше",
       howToPlay: "Как играть:",
       step1: "Прочитайте вопрос",
       step2: "Выберите один из вариантов ответа",
       step3: "Получите очки за правильный ответ",
       step4: "+30 секунд за каждый правильный ответ",
       startGame: "Начать квиз",
-      timeLeft: "Осталось времени",
+      timeLeft: "Осталось",
+      level: "Уровень",
+      levelComplete: "Уровень пройден!",
+      continueGame: "Продолжить",
+      endGame: "Завершить",
+      bonusTime: "+60 секунд бонус",
     },
     kz: {
       title: "Тарихи викторина",
@@ -655,14 +682,19 @@ const Quiz = () => {
       accuracy: "Дәлдік",
       correct: "Дұрыс",
       check: "Тексеру",
-      next: "Келесі сұрақ",
+      next: "Келесі",
       howToPlay: "Қалай ойнау керек:",
       step1: "Сұрақты оқыңыз",
       step2: "Жауап нұсқаларының бірін таңдаңыз",
       step3: "Дұрыс жауап үшін ұпай алыңыз",
       step4: "Әр дұрыс жауап үшін +30 секунд",
       startGame: "Бастау",
-      timeLeft: "Қалған уақыт",
+      timeLeft: "Қалды",
+      level: "Деңгей",
+      levelComplete: "Деңгей өтілді!",
+      continueGame: "Жалғастыру",
+      endGame: "Аяқтау",
+      bonusTime: "+60 секунд бонус",
     },
     en: {
       title: "History Quiz",
@@ -672,36 +704,93 @@ const Quiz = () => {
       accuracy: "Accuracy",
       correct: "Correct",
       check: "Check",
-      next: "Next question",
+      next: "Next",
       howToPlay: "How to play:",
       step1: "Read the question",
       step2: "Select one of the answer options",
       step3: "Get points for correct answers",
       step4: "+30 seconds for each correct answer",
       startGame: "Start Quiz",
-      timeLeft: "Time left",
+      timeLeft: "Left",
+      level: "Level",
+      levelComplete: "Level Complete!",
+      continueGame: "Continue",
+      endGame: "End Game",
+      bonusTime: "+60 seconds bonus",
     },
   };
 
   const t = translations[language];
 
+  // Level Complete Screen
+  if (showLevelComplete && gameStarted) {
+    return (
+      <div className="min-h-screen flex flex-col bg-gradient-sand">
+        <Navigation />
+        <main className="flex-1 pt-20 flex items-center justify-center px-4">
+          <Card className="max-w-md w-full p-6 sm:p-8 text-center gradient-archaeology shadow-elegant animate-scale-in">
+            <div className="mb-6">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Trophy className="w-8 h-8 sm:w-10 sm:h-10 text-primary" />
+              </div>
+              <Badge className="mb-2 bg-primary text-primary-foreground">
+                {t.level} {currentLevel}
+              </Badge>
+              <h1 className="font-serif text-2xl sm:text-3xl font-bold mb-2">{t.levelComplete}</h1>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              <Card className="p-3 text-center bg-muted/30">
+                <Star className="w-5 h-5 text-primary mx-auto mb-1 fill-primary" />
+                <div className="text-xl font-bold">{score}</div>
+                <div className="text-xs text-muted-foreground">{t.points}</div>
+              </Card>
+              <Card className="p-3 text-center bg-muted/30">
+                <Trophy className="w-5 h-5 text-accent mx-auto mb-1" />
+                <div className="text-xl font-bold">{accuracy}%</div>
+                <div className="text-xs text-muted-foreground">{t.accuracy}</div>
+              </Card>
+            </div>
+
+            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-6 p-2 bg-green-500/10 rounded-lg">
+              <Zap className="w-4 h-4 text-green-600" />
+              <span className="text-green-700 font-medium">{t.bonusTime}</span>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button onClick={continueToNextLevel} className="flex-1 gap-2">
+                <Play className="w-4 h-4" />
+                {t.continueGame}
+              </Button>
+              <Button onClick={() => setGameStarted(false)} variant="outline" className="flex-1 gap-2">
+                <RotateCcw className="w-4 h-4" />
+                {t.endGame}
+              </Button>
+            </div>
+          </Card>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   if (!gameStarted) {
     return (
       <div className="min-h-screen flex flex-col bg-gradient-sand">
         <Navigation />
-        <main className="flex-1 pt-20 flex items-center justify-center">
-          <Card className="max-w-lg w-full mx-4 p-8 text-center gradient-archaeology shadow-elegant">
+        <main className="flex-1 pt-20 flex items-center justify-center px-4">
+          <Card className="max-w-lg w-full p-6 sm:p-8 text-center gradient-archaeology shadow-elegant">
             <div className="mb-6">
-              <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Brain className="w-10 h-10 text-primary" />
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Brain className="w-8 h-8 sm:w-10 sm:h-10 text-primary" />
               </div>
-              <h1 className="font-serif text-3xl font-bold mb-2">{t.title}</h1>
-              <p className="text-muted-foreground">{t.subtitle}</p>
+              <h1 className="font-serif text-2xl sm:text-3xl font-bold mb-2">{t.title}</h1>
+              <p className="text-muted-foreground text-sm sm:text-base">{t.subtitle}</p>
             </div>
 
             <div className="bg-muted/30 rounded-lg p-4 mb-6 text-left">
-              <h3 className="font-semibold mb-3">{t.howToPlay}</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
+              <h3 className="font-semibold mb-3 text-sm sm:text-base">{t.howToPlay}</h3>
+              <ul className="space-y-2 text-xs sm:text-sm text-muted-foreground">
                 <li className="flex items-start gap-2">
                   <span className="text-primary font-bold">1.</span>
                   {t.step1}
@@ -741,74 +830,89 @@ const Quiz = () => {
     <div className="min-h-screen flex flex-col bg-gradient-sand">
       <Navigation />
 
-      <main className="flex-1 pt-20">
+      <main className="flex-1 pt-16 sm:pt-20">
         {/* Header with Timer */}
-        <section className="py-8 bg-gradient-archaeology">
+        <section className="py-4 sm:py-6 bg-gradient-archaeology">
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center">
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-background rounded-full mb-4 border border-primary/20">
-                <Brain className="w-4 h-4 text-primary" />
-                <span className="text-sm font-medium">{t.title}</span>
+              <div className="flex flex-wrap items-center justify-center gap-2 mb-3">
+                <Badge className="bg-primary text-primary-foreground">
+                  {t.level} {currentLevel}
+                </Badge>
+                <div className="inline-flex items-center gap-1 px-3 py-1 bg-background rounded-full border border-primary/20">
+                  <Brain className="w-3 h-3 text-primary" />
+                  <span className="text-xs font-medium">{t.title}</span>
+                </div>
               </div>
               
-              <div className={`inline-flex items-center gap-2 px-6 py-3 rounded-full ${
+              <div className={`inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 rounded-full ${
                 timeLeft <= 60 ? 'bg-red-100 text-red-700 border-red-300' : 'bg-primary/10 text-primary border-primary/20'
               } border`}>
-                <Clock className="w-5 h-5" />
-                <span className="text-2xl font-bold font-mono">{formatTime(timeLeft)}</span>
+                <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="text-xl sm:text-2xl font-bold font-mono">{formatTime(timeLeft)}</span>
+              </div>
+              
+              {/* Level Progress Bar */}
+              <div className="mt-3 max-w-xs mx-auto">
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-primary transition-all duration-300"
+                    style={{ width: `${levelProgress}%` }}
+                  />
+                </div>
               </div>
             </div>
           </div>
         </section>
 
         {/* Stats */}
-        <section className="py-4 border-y border-primary/10 bg-background/50">
+        <section className="py-3 sm:py-4 border-y border-primary/10 bg-background/50">
           <div className="container mx-auto px-4">
-            <div className="grid grid-cols-4 gap-3 max-w-2xl mx-auto">
-              <Card className="p-3 text-center gradient-archaeology">
-                <Star className="w-5 h-5 text-primary mx-auto mb-1 fill-primary" />
-                <div className="text-xl font-bold">{score}</div>
-                <div className="text-xs text-muted-foreground">{t.points}</div>
+            <div className="grid grid-cols-4 gap-2 sm:gap-3 max-w-2xl mx-auto">
+              <Card className="p-2 sm:p-3 text-center gradient-archaeology">
+                <Star className="w-4 h-4 sm:w-5 sm:h-5 text-primary mx-auto mb-1 fill-primary" />
+                <div className="text-base sm:text-xl font-bold">{score}</div>
+                <div className="text-[10px] sm:text-xs text-muted-foreground">{t.points}</div>
               </Card>
-              <Card className="p-3 text-center gradient-archaeology">
-                <Target className="w-5 h-5 text-secondary mx-auto mb-1" />
-                <div className="text-xl font-bold">{currentQuestionIndex + 1}/{quizQuestions.length}</div>
-                <div className="text-xs text-muted-foreground">{t.question}</div>
+              <Card className="p-2 sm:p-3 text-center gradient-archaeology">
+                <Target className="w-4 h-4 sm:w-5 sm:h-5 text-secondary mx-auto mb-1" />
+                <div className="text-base sm:text-xl font-bold">{(currentQuestionIndex % QUESTIONS_PER_LEVEL) + 1}/{QUESTIONS_PER_LEVEL}</div>
+                <div className="text-[10px] sm:text-xs text-muted-foreground">{t.question}</div>
               </Card>
-              <Card className="p-3 text-center gradient-archaeology">
-                <Trophy className="w-5 h-5 text-accent mx-auto mb-1" />
-                <div className="text-xl font-bold">{accuracy}%</div>
-                <div className="text-xs text-muted-foreground">{t.accuracy}</div>
+              <Card className="p-2 sm:p-3 text-center gradient-archaeology">
+                <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-accent mx-auto mb-1" />
+                <div className="text-base sm:text-xl font-bold">{accuracy}%</div>
+                <div className="text-[10px] sm:text-xs text-muted-foreground">{t.accuracy}</div>
               </Card>
-              <Card className="p-3 text-center gradient-archaeology">
-                <Award className="w-5 h-5 text-primary mx-auto mb-1" />
-                <div className="text-xl font-bold">{correctAnswers}</div>
-                <div className="text-xs text-muted-foreground">{t.correct}</div>
+              <Card className="p-2 sm:p-3 text-center gradient-archaeology">
+                <Award className="w-4 h-4 sm:w-5 sm:h-5 text-primary mx-auto mb-1" />
+                <div className="text-base sm:text-xl font-bold">{correctAnswers}</div>
+                <div className="text-[10px] sm:text-xs text-muted-foreground">{t.correct}</div>
               </Card>
             </div>
           </div>
         </section>
 
         {/* Quiz Area */}
-        <section className="py-8">
+        <section className="py-4 sm:py-8">
           <div className="container mx-auto px-4">
             <div className="max-w-2xl mx-auto">
-              <Card className="p-6 gradient-archaeology shadow-elegant">
-                <Badge className="mb-4 bg-primary/10 text-primary border-primary/20">
-                  {t.question} {currentQuestionIndex + 1} • +{currentQuestion.points} {t.points.toLowerCase()}
+              <Card className="p-4 sm:p-6 gradient-archaeology shadow-elegant">
+                <Badge className="mb-3 sm:mb-4 bg-primary/10 text-primary border-primary/20 text-xs">
+                  {t.question} {(currentQuestionIndex % QUESTIONS_PER_LEVEL) + 1} • +{currentQuestion.points} {t.points.toLowerCase()}
                 </Badge>
 
-                <h2 className="font-serif text-xl font-bold mb-6">
+                <h2 className="font-serif text-base sm:text-xl font-bold mb-4 sm:mb-6">
                   {currentQuestion.question[language]}
                 </h2>
 
-                <div className="space-y-3 mb-6">
+                <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
                   {currentQuestion.options[language].map((option, index) => (
                     <button
                       key={index}
                       onClick={() => !showResult && setSelectedOption(index)}
                       disabled={showResult}
-                      className={`w-full p-4 rounded-lg text-left transition-all border-2 ${
+                      className={`w-full p-3 sm:p-4 rounded-lg text-left transition-all border-2 text-sm sm:text-base ${
                         showResult
                           ? index === currentQuestion.correctIndex
                             ? 'bg-green-50 border-green-500 text-green-700'
