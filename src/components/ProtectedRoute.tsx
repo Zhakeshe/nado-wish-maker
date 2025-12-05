@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
@@ -11,66 +11,61 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
-  const [initialCheckDone, setInitialCheckDone] = useState(false);
+  const initRef = useRef(false);
 
   useEffect(() => {
-    let isMounted = true;
+    if (initRef.current) return;
+    initRef.current = true;
 
-    const performInitialCheck = async () => {
-      await checkAuth();
-      if (isMounted) {
-        setInitialCheckDone(true);
-      }
-    };
-
-    performInitialCheck();
-
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        // Only react to auth changes after initial check is done
-        if (!initialCheckDone) return;
+    const checkAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
         
-        if (session?.user) {
-          await checkVerification(session.user.id);
-        } else {
-          if (isMounted) {
-            setIsAuthenticated(false);
-            setIsVerified(false);
-            setLoading(false);
-          }
+        if (!session?.user) {
+          setIsAuthenticated(false);
+          setLoading(false);
+          return;
         }
+
+        setIsAuthenticated(true);
+        
+        // Quick verification check with timeout
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('timeout')), 2000)
+        );
+        
+        try {
+          const profilePromise = supabase
+            .from("profiles")
+            .select("is_verified")
+            .eq("user_id", session.user.id)
+            .maybeSingle();
+          
+          const { data: profile } = await Promise.race([profilePromise, timeoutPromise]) as any;
+          setIsVerified(profile?.is_verified || false);
+        } catch {
+          // Timeout - assume not verified
+          setIsVerified(false);
+        }
+        
+        setLoading(false);
+      } catch {
+        setIsAuthenticated(false);
+        setLoading(false);
       }
-    );
-
-    return () => {
-      isMounted = false;
-      authListener.subscription.unsubscribe();
     };
-  }, [initialCheckDone]);
 
-  const checkAuth = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      setIsAuthenticated(false);
-      setLoading(false);
-      return;
-    }
+    checkAuth();
 
-    setIsAuthenticated(true);
-    await checkVerification(user.id);
-  };
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        setIsAuthenticated(false);
+        setIsVerified(false);
+      }
+    });
 
-  const checkVerification = async (userId: string) => {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("is_verified")
-      .eq("user_id", userId)
-      .single();
-
-    setIsVerified(profile?.is_verified || false);
-    setLoading(false);
-  };
+    return () => subscription.unsubscribe();
+  }, []);
 
   if (loading) {
     return (
