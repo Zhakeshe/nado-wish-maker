@@ -6,13 +6,81 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Verify webhook signature using HMAC-SHA256
+async function verifySignature(payload: string, signature: string | null, secret: string): Promise<boolean> {
+  if (!signature) {
+    console.log('No signature provided');
+    return false;
+  }
+
+  try {
+    const encoder = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+      "raw",
+      encoder.encode(secret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"]
+    );
+
+    const signatureBytes = await crypto.subtle.sign(
+      "HMAC",
+      key,
+      encoder.encode(payload)
+    );
+
+    const expectedSignature = Array.from(new Uint8Array(signatureBytes))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+
+    // Compare signatures (handle both with and without prefix)
+    const receivedSig = signature.replace(/^sha256=/, '').toLowerCase();
+    const isValid = receivedSig === expectedSignature.toLowerCase();
+    
+    console.log('Signature verification:', { isValid, receivedLength: receivedSig.length });
+    return isValid;
+  } catch (error) {
+    console.error('Signature verification error:', error);
+    return false;
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const body = await req.json();
+    const WEBHOOK_SECRET = Deno.env.get('WEBHOOK_SECRET');
+    
+    if (!WEBHOOK_SECRET) {
+      console.error('WEBHOOK_SECRET not configured');
+      return new Response('Server configuration error', { status: 500 });
+    }
+
+    // Get raw body for signature verification
+    const rawBody = await req.text();
+    
+    // Get signature from headers (try common header names)
+    const signature = req.headers.get('x-signature') || 
+                     req.headers.get('x-webhook-signature') ||
+                     req.headers.get('x-hub-signature-256') ||
+                     req.headers.get('authorization');
+
+    // Verify signature
+    const isValid = await verifySignature(rawBody, signature, WEBHOOK_SECRET);
+    
+    if (!isValid) {
+      console.error('Invalid webhook signature - rejecting request');
+      return new Response('Unauthorized - Invalid signature', { 
+        status: 401,
+        headers: corsHeaders 
+      });
+    }
+
+    console.log('Webhook signature verified successfully');
+
+    const body = JSON.parse(rawBody);
     console.log('Webhook received:', JSON.stringify(body));
 
     const { id, output, status, error } = body;

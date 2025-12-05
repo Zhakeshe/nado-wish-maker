@@ -110,26 +110,16 @@ const Game = () => {
 
       if (user) {
         try {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('points')
-            .eq('user_id', user.id)
-            .single();
+          // Use secure RPC function to award points
+          const { data, error } = await supabase.rpc('award_game_points', {
+            action_type: 'game_correct_answer',
+            description_text: `Правильный ответ: ${currentObject.name}`
+          });
 
-          if (profile) {
-            await supabase
-              .from('profiles')
-              .update({ points: (profile.points || 0) + points })
-              .eq('user_id', user.id);
-
-            await supabase
-              .from('points_history')
-              .insert({
-                user_id: user.id,
-                points,
-                action: 'game_correct_answer',
-                description: `Правильный ответ: ${currentObject.name}`
-              });
+          if (error) {
+            console.error('Error awarding points:', error);
+          } else {
+            console.log('Points awarded:', data);
           }
         } catch (error) {
           console.error('Error updating points:', error);
