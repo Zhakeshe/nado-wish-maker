@@ -4,10 +4,11 @@ import { Footer } from "@/components/Footer";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, Filter, Eye, Building2, Landmark } from "lucide-react";
+import { MapPin, Filter, Eye, Landmark } from "lucide-react";
 import MapboxMap, { OBLAST_DATA } from "@/components/MapboxMap";
 import { archaeologicalObjects } from "@/data/archaeologicalObjects";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { Link } from "react-router-dom";
 
 const Map = () => {
   const { language } = useLanguage();
@@ -18,7 +19,6 @@ const Map = () => {
     
     archaeologicalObjects.forEach((obj) => {
       const region = obj.region;
-      // Try to match with oblast data
       const oblast = OBLAST_DATA.find(o => 
         region.includes(o.nameRu) || 
         region.includes(o.nameKz) ||
@@ -44,21 +44,24 @@ const Map = () => {
       subtitle: "Географическое расположение всех архитектурных памятников и археологических находок Казахстана",
       allEras: "Все эпохи",
       objectsOnMap: "Объекты на карте",
-      totalObjects: "всего объектов",
+      totalObjects: "объектов",
+      view3D: "3D просмотр",
     },
     kz: {
       title: "Объектілер картасы",
       subtitle: "Қазақстанның барлық сәулет ескерткіштері мен археологиялық жәдігерлерінің географиялық орналасуы",
       allEras: "Барлық дәуірлер",
       objectsOnMap: "Картадағы объектілер",
-      totalObjects: "барлығы объект",
+      totalObjects: "объект",
+      view3D: "3D көру",
     },
     en: {
       title: "Objects Map",
       subtitle: "Geographic location of all architectural monuments and archaeological finds of Kazakhstan",
       allEras: "All eras",
       objectsOnMap: "Objects on map",
-      totalObjects: "total objects",
+      totalObjects: "objects",
+      view3D: "View 3D",
     }
   };
 
@@ -68,36 +71,33 @@ const Map = () => {
     <div className="min-h-screen flex flex-col bg-gradient-sand">
       <Navigation />
       
-      <main className="flex-1 pt-20">
+      <main className="flex-1 pt-16 sm:pt-20">
         {/* Header */}
-        <section className="py-12 bg-gradient-archaeology">
+        <section className="py-8 sm:py-12 bg-gradient-archaeology">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-background rounded-full mb-6 border border-primary/20">
-                <MapPin className="w-4 h-4 text-primary" />
-                <span className="text-sm font-medium">{archaeologicalObjects.length} {t.totalObjects}</span>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-background rounded-full mb-4 sm:mb-6 border border-primary/20">
+                <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
+                <span className="text-xs sm:text-sm font-medium">{archaeologicalObjects.length} {t.totalObjects}</span>
               </div>
               
-              <h1 className="font-serif text-4xl md:text-6xl font-bold mb-6 bg-gradient-hero bg-clip-text text-transparent">
+              <h1 className="font-serif text-3xl sm:text-4xl md:text-6xl font-bold mb-4 sm:mb-6 bg-gradient-hero bg-clip-text text-transparent">
                 {t.title}
               </h1>
-              <p className="text-lg text-muted-foreground mb-6">
+              <p className="text-sm sm:text-lg text-muted-foreground mb-4 sm:mb-6">
                 {t.subtitle}
               </p>
 
-              <div className="flex flex-wrap gap-3">
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Filter className="w-4 h-4" />
+              <div className="flex flex-wrap gap-2 sm:gap-3">
+                <Button variant="outline" size="sm" className="gap-2 text-xs sm:text-sm">
+                  <Filter className="w-3 h-3 sm:w-4 sm:h-4" />
                   {t.allEras}
                 </Button>
-                <Badge variant="secondary" className="cursor-pointer">
+                <Badge variant="secondary" className="cursor-pointer text-xs">
                   {language === 'kz' ? 'Энеолит' : 'Энеолит'}
                 </Badge>
-                <Badge variant="outline" className="cursor-pointer">
+                <Badge variant="outline" className="cursor-pointer text-xs">
                   {language === 'kz' ? 'Орта ғасыр' : 'Средневековье'}
-                </Badge>
-                <Badge variant="outline" className="cursor-pointer">
-                  {language === 'kz' ? 'Жаңа заман' : 'Новое время'}
                 </Badge>
               </div>
             </div>
@@ -105,44 +105,60 @@ const Map = () => {
         </section>
 
         {/* Map Area */}
-        <section className="py-8">
+        <section className="py-4 sm:py-8">
           <div className="container mx-auto px-4">
-            <Card className="overflow-hidden shadow-elegant p-4 md:p-6 gradient-card">
+            <Card className="overflow-hidden shadow-elegant p-3 sm:p-4 md:p-6 gradient-card">
               <MapboxMap 
                 language={language}
                 objectCounts={objectCounts}
+                showObjects={true}
               />
             </Card>
           </div>
         </section>
 
         {/* Objects List */}
-        <section className="py-12 bg-muted/30">
+        <section className="py-8 sm:py-12 bg-muted/30">
           <div className="container mx-auto px-4">
-            <h2 className="font-serif text-2xl font-bold mb-6">{t.objectsOnMap}</h2>
+            <h2 className="font-serif text-xl sm:text-2xl font-bold mb-4 sm:mb-6">{t.objectsOnMap}</h2>
             
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {archaeologicalObjects.map((item, index) => (
-                <Card key={index} className="p-4 gradient-card hover:shadow-elegant transition-smooth group cursor-pointer">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-primary/10">
-                      <Landmark className="w-5 h-5 text-primary" />
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold mb-1 group-hover:text-primary transition-colors truncate">
-                        {item.name}
-                      </h3>
-                      <p className="text-sm text-muted-foreground mb-2">{item.region}</p>
-                      <Badge variant="outline" className="text-xs">{item.era}</Badge>
-                    </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              {archaeologicalObjects.map((item, index) => {
+                const name = language === 'kz' ? item.nameKz : language === 'en' ? item.nameEn : item.name;
+                const desc = language === 'kz' ? item.descriptionKz : language === 'en' ? item.descriptionEn : item.description;
+                const era = language === 'kz' ? item.eraKz : language === 'en' ? item.eraEn : item.era;
+                
+                return (
+                  <Card key={index} className="p-3 sm:p-4 gradient-card hover:shadow-elegant transition-smooth group">
+                    <div className="flex items-start gap-3">
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden flex-shrink-0 bg-muted">
+                        <img 
+                          src={item.imageUrl || '/placeholder.svg'} 
+                          alt={name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-sm sm:text-base mb-1 group-hover:text-primary transition-colors line-clamp-1">
+                          {name}
+                        </h3>
+                        <p className="text-xs sm:text-sm text-muted-foreground mb-2 line-clamp-2">{desc}</p>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge variant="outline" className="text-[10px] sm:text-xs">{era}</Badge>
+                          <span className="text-xs text-primary font-medium">+{item.points} pts</span>
+                        </div>
+                      </div>
 
-                    <Button size="sm" variant="ghost" className="flex-shrink-0">
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </Card>
-              ))}
+                      <Button size="sm" variant="ghost" className="flex-shrink-0 p-2" asChild>
+                        <Link to={`/viewer/${item.id}`}>
+                          <Eye className="w-4 h-4" />
+                        </Link>
+                      </Button>
+                    </div>
+                  </Card>
+                );
+              })}
             </div>
           </div>
         </section>

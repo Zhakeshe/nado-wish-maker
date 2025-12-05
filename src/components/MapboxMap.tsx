@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import { MapPin } from "lucide-react";
+import { MapPin, Eye, ExternalLink } from "lucide-react";
 import type { RegionMarker } from "@/utils/regionMarkers";
+import { archaeologicalObjects, ArchaeologicalObject } from "@/data/archaeologicalObjects";
 
 const MAPBOX_TOKEN = "pk.eyJ1IjoidGFua2thZXYiLCJhIjoiY21pcG04M3Z6MGE5ODNncjIwZ3IwcmdqYyJ9.zmsQbqO_tDn7MeFIpFgkPw";
 
@@ -35,17 +36,39 @@ interface MapboxMapProps {
   onMarkerClick?: (marker: RegionMarker) => void;
   language?: 'ru' | 'kz' | 'en';
   objectCounts?: Record<string, number>;
+  showObjects?: boolean;
 }
 
-const MapboxMap = ({ markers = [], onMarkerClick, language = 'kz', objectCounts = {} }: MapboxMapProps) => {
+const MapboxMap = ({ markers = [], onMarkerClick, language = 'kz', objectCounts = {}, showObjects = true }: MapboxMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
   const [isMapReady, setIsMapReady] = useState(false);
+  const [selectedObject, setSelectedObject] = useState<ArchaeologicalObject | null>(null);
   const initRef = useRef(false);
 
-  // Memoize object counts to prevent unnecessary re-renders
   const countsKey = useMemo(() => JSON.stringify(objectCounts), [objectCounts]);
+
+  // Create GeoJSON for clustering
+  const objectsGeoJSON = useMemo(() => ({
+    type: 'FeatureCollection' as const,
+    features: archaeologicalObjects.map(obj => ({
+      type: 'Feature' as const,
+      properties: {
+        id: obj.id,
+        name: language === 'kz' ? obj.nameKz : language === 'en' ? obj.nameEn : obj.name,
+        description: language === 'kz' ? obj.descriptionKz : language === 'en' ? obj.descriptionEn : obj.description,
+        era: language === 'kz' ? obj.eraKz : language === 'en' ? obj.eraEn : obj.era,
+        region: obj.region,
+        imageUrl: obj.imageUrl,
+        points: obj.points,
+      },
+      geometry: {
+        type: 'Point' as const,
+        coordinates: obj.coordinates,
+      },
+    })),
+  }), [language]);
 
   useEffect(() => {
     if (!mapContainer.current || initRef.current) return;
@@ -68,7 +91,138 @@ const MapboxMap = ({ markers = [], onMarkerClick, language = 'kz', objectCounts 
 
     map.current.on("load", () => {
       setIsMapReady(true);
-      addMarkers();
+      
+      if (showObjects && map.current) {
+        // Add source for clustering
+        map.current.addSource('objects', {
+          type: 'geojson',
+          data: objectsGeoJSON,
+          cluster: true,
+          clusterMaxZoom: 8,
+          clusterRadius: 50,
+        });
+
+        // Cluster circles
+        map.current.addLayer({
+          id: 'clusters',
+          type: 'circle',
+          source: 'objects',
+          filter: ['has', 'point_count'],
+          paint: {
+            'circle-color': [
+              'step',
+              ['get', 'point_count'],
+              '#D4A574',
+              3, '#B8956E',
+              5, '#9A7B5A',
+            ],
+            'circle-radius': [
+              'step',
+              ['get', 'point_count'],
+              25,
+              3, 30,
+              5, 40,
+            ],
+            'circle-stroke-width': 3,
+            'circle-stroke-color': '#ffffff',
+          },
+        });
+
+        // Cluster count labels
+        map.current.addLayer({
+          id: 'cluster-count',
+          type: 'symbol',
+          source: 'objects',
+          filter: ['has', 'point_count'],
+          layout: {
+            'text-field': ['get', 'point_count_abbreviated'],
+            'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+            'text-size': 14,
+          },
+          paint: {
+            'text-color': '#ffffff',
+          },
+        });
+
+        // Individual object markers
+        map.current.addLayer({
+          id: 'unclustered-point',
+          type: 'circle',
+          source: 'objects',
+          filter: ['!', ['has', 'point_count']],
+          paint: {
+            'circle-color': '#E33E64',
+            'circle-radius': 10,
+            'circle-stroke-width': 3,
+            'circle-stroke-color': '#ffffff',
+          },
+        });
+
+        // Click on cluster to zoom
+        map.current.on('click', 'clusters', (e) => {
+          if (!map.current) return;
+          const features = map.current.queryRenderedFeatures(e.point, { layers: ['clusters'] });
+          const clusterId = features[0].properties?.cluster_id;
+          const source = map.current.getSource('objects') as mapboxgl.GeoJSONSource;
+          
+          source.getClusterExpansionZoom(clusterId, (err, zoom) => {
+            if (err || !map.current) return;
+            map.current.easeTo({
+              center: (features[0].geometry as GeoJSON.Point).coordinates as [number, number],
+              zoom: zoom || 6,
+            });
+          });
+        });
+
+        // Click on individual marker
+        map.current.on('click', 'unclustered-point', (e) => {
+          if (!e.features || !e.features[0]) return;
+          const props = e.features[0].properties;
+          const coords = (e.features[0].geometry as GeoJSON.Point).coordinates.slice() as [number, number];
+          
+          const obj = archaeologicalObjects.find(o => o.id === props?.id);
+          if (obj) {
+            setSelectedObject(obj);
+            
+            const name = language === 'kz' ? obj.nameKz : language === 'en' ? obj.nameEn : obj.name;
+            const desc = language === 'kz' ? obj.descriptionKz : language === 'en' ? obj.descriptionEn : obj.description;
+            const era = language === 'kz' ? obj.eraKz : language === 'en' ? obj.eraEn : obj.era;
+            const viewLabel = language === 'kz' ? '3D көру' : language === 'ru' ? '3D просмотр' : 'View 3D';
+            
+            new mapboxgl.Popup({ offset: 15, maxWidth: '300px' })
+              .setLngLat(coords)
+              .setHTML(`
+                <div style="padding: 8px;">
+                  <img src="${obj.imageUrl || '/placeholder.svg'}" alt="${name}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 8px;" />
+                  <h3 style="font-weight: bold; font-size: 16px; margin-bottom: 4px;">${name}</h3>
+                  <p style="font-size: 12px; color: #666; margin-bottom: 6px;">${desc}</p>
+                  <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
+                    <span style="background: #f0e6d9; padding: 2px 8px; border-radius: 12px; font-size: 11px;">${era}</span>
+                    <span style="color: #E33E64; font-weight: bold; font-size: 12px;">+${obj.points} pts</span>
+                  </div>
+                  <a href="/viewer/${obj.id}" style="display: flex; align-items: center; justify-content: center; gap: 6px; background: #E33E64; color: white; padding: 8px 12px; border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 500;">
+                    ${viewLabel}
+                  </a>
+                </div>
+              `)
+              .addTo(map.current!);
+          }
+        });
+
+        // Change cursor on hover
+        map.current.on('mouseenter', 'clusters', () => {
+          if (map.current) map.current.getCanvas().style.cursor = 'pointer';
+        });
+        map.current.on('mouseleave', 'clusters', () => {
+          if (map.current) map.current.getCanvas().style.cursor = '';
+        });
+        map.current.on('mouseenter', 'unclustered-point', () => {
+          if (map.current) map.current.getCanvas().style.cursor = 'pointer';
+        });
+        map.current.on('mouseleave', 'unclustered-point', () => {
+          if (map.current) map.current.getCanvas().style.cursor = '';
+        });
+      }
     });
 
     return () => {
@@ -82,95 +236,63 @@ const MapboxMap = ({ markers = [], onMarkerClick, language = 'kz', objectCounts 
     };
   }, []);
 
-  const addMarkers = () => {
-    if (!map.current) return;
+  // Update GeoJSON source when language changes
+  useEffect(() => {
+    if (isMapReady && map.current && showObjects) {
+      const source = map.current.getSource('objects') as mapboxgl.GeoJSONSource;
+      if (source) {
+        source.setData(objectsGeoJSON);
+      }
+    }
+  }, [objectsGeoJSON, isMapReady, showObjects]);
 
-    // Clear existing markers
-    markersRef.current.forEach((m) => m.remove());
-    markersRef.current = [];
-
-    const counts = JSON.parse(countsKey || '{}');
-
-    OBLAST_DATA.forEach((oblast) => {
-      const count = counts[oblast.id] || counts[oblast.nameRu] || counts[oblast.nameKz] || 0;
-      const name = language === 'kz' ? oblast.nameKz : language === 'en' ? oblast.nameEn : oblast.nameRu;
-
-      const el = document.createElement("div");
-      el.style.cssText = `
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        cursor: pointer;
-      `;
-      el.innerHTML = `
-        <div style="
-          width: 40px;
-          height: 40px;
-          background: linear-gradient(135deg, #D4A574, #B8956E);
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-          border: 3px solid white;
-          transition: transform 0.2s;
-        " onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
-          <span style="color: white; font-weight: bold; font-size: 14px;">${count}</span>
-        </div>
-      `;
-
-      const popup = new mapboxgl.Popup({ offset: 25, closeButton: false }).setHTML(`
-        <div style="padding: 12px; min-width: 180px;">
-          <strong style="font-size: 14px; display: block; margin-bottom: 4px;">${name}</strong>
-          <p style="font-size: 13px; color: #666; margin: 0;">${count} ${language === 'kz' ? 'объект' : language === 'ru' ? 'объект(ов)' : 'object(s)'}</p>
-        </div>
-      `);
-
-      const mapboxMarker = new mapboxgl.Marker(el)
-        .setLngLat(oblast.coords)
-        .setPopup(popup)
-        .addTo(map.current!);
-
-      el.addEventListener("click", () => {
-        const regionMarker = markers.find(m => 
-          m.label === oblast.nameRu || 
-          m.label === oblast.nameKz || 
-          m.regionId === oblast.id
-        );
-        if (regionMarker && onMarkerClick) {
-          onMarkerClick(regionMarker);
-        }
-      });
-
-      markersRef.current.push(mapboxMarker);
-    });
+  const translations = {
+    ru: {
+      mapTitle: "Карта Казахстана",
+      regions: "областей",
+      objectCount: "Объекты",
+      zoomIn: "Приблизьте для деталей",
+    },
+    kz: {
+      mapTitle: "Қазақстан картасы",
+      regions: "облыс",
+      objectCount: "Объектілер",
+      zoomIn: "Толық көру үшін жақындатыңыз",
+    },
+    en: {
+      mapTitle: "Map of Kazakhstan",
+      regions: "regions",
+      objectCount: "Objects",
+      zoomIn: "Zoom in for details",
+    },
   };
 
-  // Update markers when counts change
-  useEffect(() => {
-    if (isMapReady) {
-      addMarkers();
-    }
-  }, [countsKey, language, isMapReady]);
+  const t = translations[language];
 
   return (
     <div className="w-full space-y-4">
       <div
         ref={mapContainer}
-        className="w-full h-[500px] md:h-[600px] rounded-xl overflow-hidden border shadow-elegant"
+        className="w-full h-[400px] sm:h-[500px] md:h-[600px] rounded-xl overflow-hidden border shadow-elegant"
       />
 
       {isMapReady && (
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs sm:text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <MapPin className="w-4 h-4" />
             <span>
-              {language === 'kz' ? 'Қазақстан картасы' : language === 'ru' ? 'Карта Казахстана' : 'Map of Kazakhstan'} · {OBLAST_DATA.length} {language === 'kz' ? 'облыс' : language === 'ru' ? 'областей' : 'regions'}
+              {t.mapTitle} · {archaeologicalObjects.length} {t.objectCount.toLowerCase()}
             </span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-primary"></div>
-            <span>{language === 'kz' ? 'Объектілер саны' : language === 'ru' ? 'Количество объектов' : 'Object count'}</span>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-primary"></div>
+              <span>{language === 'kz' ? 'Кластер' : language === 'ru' ? 'Кластер' : 'Cluster'}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-[#E33E64]"></div>
+              <span>{language === 'kz' ? 'Объект' : language === 'ru' ? 'Объект' : 'Object'}</span>
+            </div>
           </div>
         </div>
       )}
