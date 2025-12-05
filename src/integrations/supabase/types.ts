@@ -246,6 +246,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      award_game_points: {
+        Args: { action_type: string; description_text?: string }
+        Returns: Json
+      }
       get_leaderboard: {
         Args: { limit_count?: number }
         Returns: {
