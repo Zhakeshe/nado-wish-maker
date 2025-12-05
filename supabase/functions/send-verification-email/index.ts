@@ -37,15 +37,6 @@ function checkRateLimit(clientIP: string): boolean {
   return true;
 }
 
-const buildPlainTextBody = (code: string): string => {
-  return [
-    "MuseoNet",
-    "Код входа:",
-    `${code}`,
-    "Действует 5 минут. Если код не запрашивали — просто игнорируйте это письмо.",
-  ].join("\n");
-};
-
 serve(async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -93,17 +84,18 @@ serve(async (req: Request): Promise<Response> => {
 
     const { email, code } = validationResult.data;
 
-    const plainText = buildPlainTextBody(code);
-
-    await client.send({
-      from: `MuseoNet <${SMTP_FROM_EMAIL!}>`,
-      to: email,
+    const { data, error } = await resend.emails.send({
+      from: "MuseoNet <onboarding@resend.dev>",
+      to: [email],
       subject: "Код входа",
-      content: plainText,
-      html: undefined,
-      headers: {
-        "X-Entity-Type": "Transactional",
-      },
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 400px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #333;">MuseoNet</h2>
+          <p style="font-size: 16px; color: #666;">Код входа:</p>
+          <p style="font-size: 32px; font-weight: bold; color: #E33E64; letter-spacing: 4px;">${code}</p>
+          <p style="font-size: 14px; color: #999;">Действует 5 минут. Если код не запрашивали — просто игнорируйте это письмо.</p>
+        </div>
+      `,
     });
 
     if (error) {

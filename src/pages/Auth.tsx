@@ -133,63 +133,24 @@ const Auth = () => {
       return;
     }
 
-    // Small delay to ensure profile trigger has completed
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Generate verification code
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-    const profilePayload = {
-      user_id: authData.user.id,
-      full_name: fullName,
-      verification_code: verificationCode,
-      code_expires_at: expiresAt.toISOString(),
-      last_resend_at: new Date().toISOString(),
-      is_verified: false,
-    };
+    // Create verification code in database
+    const { data: codeData, error: codeError } = await supabase.rpc("create_verification_code");
 
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .upsert(profilePayload, { onConflict: "user_id" });
-
-    if (profileError) {
-      toast({
-        variant: "destructive",
-        title: "Профиль жаңартылмады",
-        description: profileError.message,
-      });
-      setIsLoading(false);
-      return;
-    }
+    const codeResult = codeData as { success: boolean; code?: string; error?: string } | null;
+    const codeToSend = codeResult?.success && codeResult?.code ? codeResult.code : verificationCode;
 
     if (codeError) {
       console.error("Verification code creation error:", codeError);
-      // Still navigate to verify-email, user can request new code there
-      toast({
-        title: "Тіркелу сәтті!",
-        description: "Verify-email бетінде жаңа код сұраңыз",
-      });
-      navigate("/verify-email");
-      setIsLoading(false);
-      return;
-    }
-
-    const codeResult = codeData as { success: boolean; code?: string; error?: string };
-
-    if (!codeResult.success || !codeResult.code) {
-      console.error("Verification code creation failed:", codeResult.error);
-      // Still navigate to verify-email, user can request new code there
-      toast({
-        title: "Тіркелу сәтті!",
-        description: "Verify-email бетінде жаңа код сұраңыз",
-      });
-      navigate("/verify-email");
-      setIsLoading(false);
-      return;
     }
 
     // Send email with timeout
     try {
       const { error: emailError } = await Promise.race([
         supabase.functions.invoke("send-verification-email", {
-          body: { email: email.trim().toLowerCase(), code: codeResult.code },
+          body: { email: email.trim().toLowerCase(), code: codeToSend },
         }),
         new Promise<{ error: Error }>((_, reject) => 
           setTimeout(() => reject({ error: new Error('Email жіберу ұзақ болды') }), 15000)
