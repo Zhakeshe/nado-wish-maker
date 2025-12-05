@@ -41,6 +41,83 @@ export type Database = {
         }
         Relationships: []
       }
+      forum_posts: {
+        Row: {
+          author_id: string | null
+          content: string
+          created_at: string
+          id: string
+          is_solution: boolean | null
+          topic_id: string
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          is_solution?: boolean | null
+          topic_id: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          is_solution?: boolean | null
+          topic_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forum_posts_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "forum_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forum_topics: {
+        Row: {
+          author_id: string | null
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          is_pinned: boolean | null
+          posts_count: number | null
+          title: string
+          updated_at: string
+          views_count: number | null
+        }
+        Insert: {
+          author_id?: string | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_pinned?: boolean | null
+          posts_count?: number | null
+          title: string
+          updated_at?: string
+          views_count?: number | null
+        }
+        Update: {
+          author_id?: string | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_pinned?: boolean | null
+          posts_count?: number | null
+          title?: string
+          updated_at?: string
+          views_count?: number | null
+        }
+        Relationships: []
+      }
       generation_tasks: {
         Row: {
           created_at: string

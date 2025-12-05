@@ -19,6 +19,7 @@ interface Translations {
   about: string;
   news: string;
   map: string;
+  forum: string;
   upload3D: string;
   login: string;
 }
@@ -31,6 +32,7 @@ const translations: Record<Language, Translations> = {
     about: "О нас",
     news: "Новости",
     map: "Карта",
+    forum: "Форум",
     upload3D: "Загрузить 3D",
     login: "Войти",
   },
@@ -41,6 +43,7 @@ const translations: Record<Language, Translations> = {
     about: "Біз туралы",
     news: "Жаңалықтар",
     map: "Карта",
+    forum: "Форум",
     upload3D: "3D жүктеу",
     login: "Кіру",
   },
@@ -51,6 +54,7 @@ const translations: Record<Language, Translations> = {
     about: "About Us",
     news: "News",
     map: "Map",
+    forum: "Forum",
     upload3D: "Upload 3D",
     login: "Login",
   },
@@ -167,6 +171,12 @@ export const Navigation = () => {
               {t.map}
             </Link>
             <Link
+              to="/forum"
+              className="text-foreground hover:text-primary transition-smooth font-medium"
+            >
+              {t.forum}
+            </Link>
+            <Link
               to="/upload-3d"
               className="text-foreground hover:text-primary transition-smooth font-medium"
             >
@@ -268,6 +278,13 @@ export const Navigation = () => {
               onClick={() => setIsOpen(false)}
             >
               {t.map}
+            </Link>
+            <Link
+              to="/forum"
+              className="block text-foreground hover:text-primary transition-smooth font-medium"
+              onClick={() => setIsOpen(false)}
+            >
+              {t.forum}
             </Link>
             <Link
               to="/upload-3d"

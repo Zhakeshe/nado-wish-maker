@@ -12,6 +12,7 @@ import Quiz from "./pages/Quiz";
 import About from "./pages/About";
 import News from "./pages/News";
 import Map from "./pages/Map";
+import Forum from "./pages/Forum";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
@@ -46,6 +47,7 @@ const App = () => (
             <Route path="/game" element={<ProtectedRoute><Game /></ProtectedRoute>} />
             <Route path="/quiz" element={<ProtectedRoute><Quiz /></ProtectedRoute>} />
             <Route path="/map" element={<ProtectedRoute><Map /></ProtectedRoute>} />
+            <Route path="/forum" element={<ProtectedRoute><Forum /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/viewer/:id?" element={<ProtectedRoute><Viewer /></ProtectedRoute>} />
             <Route path="/upload-3d" element={<ProtectedRoute><Upload3D /></ProtectedRoute>} />
