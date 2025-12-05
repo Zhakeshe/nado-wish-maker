@@ -20,7 +20,7 @@ interface QuizQuestion {
   points: number;
 }
 
-const quizQuestions: QuizQuestion[] = [
+const allQuizQuestions: QuizQuestion[] = [
   {
     id: 1,
     question: {
@@ -171,7 +171,317 @@ const quizQuestions: QuizQuestion[] = [
     correctIndex: 2,
     points: 25,
   },
+  {
+    id: 11,
+    question: {
+      ru: "Кто основал Казахское ханство?",
+      kz: "Қазақ хандығын кім құрды?",
+      en: "Who founded the Kazakh Khanate?",
+    },
+    options: {
+      ru: ["Абылай хан", "Керей и Жанибек", "Тауке хан", "Касым хан"],
+      kz: ["Абылай хан", "Керей мен Жәнібек", "Тәуке хан", "Қасым хан"],
+      en: ["Abylai Khan", "Kerey and Zhanibek", "Tauke Khan", "Kasym Khan"],
+    },
+    correctIndex: 1,
+    points: 20,
+  },
+  {
+    id: 12,
+    question: {
+      ru: "В каком году было образовано Казахское ханство?",
+      kz: "Қазақ хандығы қай жылы құрылды?",
+      en: "In what year was the Kazakh Khanate formed?",
+    },
+    options: {
+      ru: ["1456", "1465", "1480", "1500"],
+      kz: ["1456", "1465", "1480", "1500"],
+      en: ["1456", "1465", "1480", "1500"],
+    },
+    correctIndex: 1,
+    points: 20,
+  },
+  {
+    id: 13,
+    question: {
+      ru: "Какой древний город был разрушен монголами в 1219 году?",
+      kz: "1219 жылы моңғолдар қай ежелгі қаланы қиратты?",
+      en: "Which ancient city was destroyed by the Mongols in 1219?",
+    },
+    options: {
+      ru: ["Туркестан", "Отрар", "Сауран", "Сыганак"],
+      kz: ["Түркістан", "Отырар", "Сауран", "Сығанақ"],
+      en: ["Turkestan", "Otrar", "Sauran", "Syganak"],
+    },
+    correctIndex: 1,
+    points: 25,
+  },
+  {
+    id: 14,
+    question: {
+      ru: "Как называется традиционное казахское жилище?",
+      kz: "Қазақтың дәстүрлі тұрғын үйі қалай аталады?",
+      en: "What is the traditional Kazakh dwelling called?",
+    },
+    options: {
+      ru: ["Изба", "Юрта", "Чум", "Типи"],
+      kz: ["Изба", "Киіз үй", "Чум", "Типи"],
+      en: ["Izba", "Yurt", "Chum", "Tipi"],
+    },
+    correctIndex: 1,
+    points: 10,
+  },
+  {
+    id: 15,
+    question: {
+      ru: "Какой хан принял свод законов «Жеты Жаргы»?",
+      kz: "«Жеті Жарғы» заңдар жинағын қай хан қабылдады?",
+      en: "Which khan adopted the code of laws 'Zheti Zhargy'?",
+    },
+    options: {
+      ru: ["Касым хан", "Тауке хан", "Абылай хан", "Кенесары хан"],
+      kz: ["Қасым хан", "Тәуке хан", "Абылай хан", "Кенесары хан"],
+      en: ["Kasym Khan", "Tauke Khan", "Abylai Khan", "Kenesary Khan"],
+    },
+    correctIndex: 1,
+    points: 20,
+  },
+  {
+    id: 16,
+    question: {
+      ru: "К какому веку относится культура Андроново?",
+      kz: "Андронов мәдениеті қай ғасырға жатады?",
+      en: "To which millennium does the Andronovo culture belong?",
+    },
+    options: {
+      ru: ["I тыс. до н.э.", "II тыс. до н.э.", "III тыс. до н.э.", "IV тыс. до н.э."],
+      kz: ["б.з.д. I мыңжылдық", "б.з.д. II мыңжылдық", "б.з.д. III мыңжылдық", "б.з.д. IV мыңжылдық"],
+      en: ["1st millennium BC", "2nd millennium BC", "3rd millennium BC", "4th millennium BC"],
+    },
+    correctIndex: 1,
+    points: 25,
+  },
+  {
+    id: 17,
+    question: {
+      ru: "Какое животное было священным у саков?",
+      kz: "Сақтарда қандай жануар қасиетті болды?",
+      en: "Which animal was sacred to the Sakas?",
+    },
+    options: {
+      ru: ["Лев", "Олень", "Медведь", "Волк"],
+      kz: ["Арыстан", "Бұғы", "Аю", "Қасқыр"],
+      en: ["Lion", "Deer", "Bear", "Wolf"],
+    },
+    correctIndex: 1,
+    points: 15,
+  },
+  {
+    id: 18,
+    question: {
+      ru: "Где находится мавзолей Арыстан-Баба?",
+      kz: "Арыстанбаб кесенесі қайда орналасқан?",
+      en: "Where is the Arystan-Bab mausoleum located?",
+    },
+    options: {
+      ru: ["Алматы", "Туркестан", "Шымкент", "Тараз"],
+      kz: ["Алматы", "Түркістан", "Шымкент", "Тараз"],
+      en: ["Almaty", "Turkestan", "Shymkent", "Taraz"],
+    },
+    correctIndex: 1,
+    points: 15,
+  },
+  {
+    id: 19,
+    question: {
+      ru: "Какой знаменитый учёный родился в городе Отрар?",
+      kz: "Қай атақты ғалым Отырар қаласында туылды?",
+      en: "Which famous scientist was born in the city of Otrar?",
+    },
+    options: {
+      ru: ["Ибн Сина", "Аль-Фараби", "Аль-Хорезми", "Улугбек"],
+      kz: ["Ибн Сина", "Әл-Фараби", "Әл-Хорезми", "Ұлықбек"],
+      en: ["Ibn Sina", "Al-Farabi", "Al-Khwarizmi", "Ulugbek"],
+    },
+    correctIndex: 1,
+    points: 20,
+  },
+  {
+    id: 20,
+    question: {
+      ru: "Сколько жузов в казахском обществе?",
+      kz: "Қазақ қоғамында неше жүз бар?",
+      en: "How many zhuzes are there in Kazakh society?",
+    },
+    options: {
+      ru: ["Два", "Три", "Четыре", "Пять"],
+      kz: ["Екі", "Үш", "Төрт", "Бес"],
+      en: ["Two", "Three", "Four", "Five"],
+    },
+    correctIndex: 1,
+    points: 10,
+  },
+  {
+    id: 21,
+    question: {
+      ru: "Какой инструмент является символом казахской музыки?",
+      kz: "Қазақ музыкасының символы қандай аспап?",
+      en: "Which instrument is a symbol of Kazakh music?",
+    },
+    options: {
+      ru: ["Балалайка", "Домбра", "Гитара", "Скрипка"],
+      kz: ["Балалайка", "Домбыра", "Гитара", "Скрипка"],
+      en: ["Balalaika", "Dombra", "Guitar", "Violin"],
+    },
+    correctIndex: 1,
+    points: 10,
+  },
+  {
+    id: 22,
+    question: {
+      ru: "В каком году был найден Золотой человек?",
+      kz: "Алтын адам қай жылы табылды?",
+      en: "In what year was the Golden Man found?",
+    },
+    options: {
+      ru: ["1969", "1970", "1978", "1985"],
+      kz: ["1969", "1970", "1978", "1985"],
+      en: ["1969", "1970", "1978", "1985"],
+    },
+    correctIndex: 1,
+    points: 20,
+  },
+  {
+    id: 23,
+    question: {
+      ru: "Какой город был столицей Западно-Тюркского каганата?",
+      kz: "Батыс Түрік қағанатының астанасы қай қала болды?",
+      en: "Which city was the capital of the Western Turkic Khaganate?",
+    },
+    options: {
+      ru: ["Тараз", "Суяб", "Отрар", "Баласагун"],
+      kz: ["Тараз", "Суяб", "Отырар", "Баласағұн"],
+      en: ["Taraz", "Suyab", "Otrar", "Balasagun"],
+    },
+    correctIndex: 1,
+    points: 25,
+  },
+  {
+    id: 24,
+    question: {
+      ru: "Кто такой Коркыт-ата?",
+      kz: "Қорқыт ата кім?",
+      en: "Who is Korkyt-ata?",
+    },
+    options: {
+      ru: ["Поэт", "Легендарный музыкант и мыслитель", "Военачальник", "Хан"],
+      kz: ["Ақын", "Аңызға айналған музыкант және ойшыл", "Қолбасшы", "Хан"],
+      en: ["Poet", "Legendary musician and thinker", "Military commander", "Khan"],
+    },
+    correctIndex: 1,
+    points: 15,
+  },
+  {
+    id: 25,
+    question: {
+      ru: "Какое государство существовало на территории Казахстана в VI-VIII веках?",
+      kz: "VI-VIII ғасырларда Қазақстан аумағында қандай мемлекет болды?",
+      en: "Which state existed on the territory of Kazakhstan in the 6th-8th centuries?",
+    },
+    options: {
+      ru: ["Золотая Орда", "Тюркский каганат", "Казахское ханство", "Монгольская империя"],
+      kz: ["Алтын Орда", "Түрік қағанаты", "Қазақ хандығы", "Моңғол империясы"],
+      en: ["Golden Horde", "Turkic Khaganate", "Kazakh Khanate", "Mongol Empire"],
+    },
+    correctIndex: 1,
+    points: 20,
+  },
+  {
+    id: 26,
+    question: {
+      ru: "Что означает слово «казах»?",
+      kz: "«Қазақ» сөзі нені білдіреді?",
+      en: "What does the word 'Kazakh' mean?",
+    },
+    options: {
+      ru: ["Воин", "Свободный, вольный", "Кочевник", "Охотник"],
+      kz: ["Жауынгер", "Еркін, азат", "Көшпенді", "Аңшы"],
+      en: ["Warrior", "Free, independent", "Nomad", "Hunter"],
+    },
+    correctIndex: 1,
+    points: 15,
+  },
+  {
+    id: 27,
+    question: {
+      ru: "В каком году Казахстан провозгласил независимость?",
+      kz: "Қазақстан тәуелсіздігін қай жылы жариялады?",
+      en: "In what year did Kazakhstan declare independence?",
+    },
+    options: {
+      ru: ["1990", "1991", "1992", "1993"],
+      kz: ["1990", "1991", "1992", "1993"],
+      en: ["1990", "1991", "1992", "1993"],
+    },
+    correctIndex: 1,
+    points: 10,
+  },
+  {
+    id: 28,
+    question: {
+      ru: "Какой мавзолей находится рядом с городом Тараз?",
+      kz: "Тараз қаласының жанында қай кесене орналасқан?",
+      en: "Which mausoleum is located near the city of Taraz?",
+    },
+    options: {
+      ru: ["Ходжи Ахмеда Ясави", "Айша-Биби", "Арыстан-Баба", "Жусупа Баласагуни"],
+      kz: ["Қожа Ахмет Яссауи", "Айша бибі", "Арыстанбаб", "Жүсіп Баласағұни"],
+      en: ["Khoja Ahmed Yasawi", "Aisha-Bibi", "Arystan-Bab", "Yusuf Balasaguni"],
+    },
+    correctIndex: 1,
+    points: 20,
+  },
+  {
+    id: 29,
+    question: {
+      ru: "Какой хан объединил три жуза в XVIII веке?",
+      kz: "XVIII ғасырда үш жүзді қай хан біріктірді?",
+      en: "Which khan united the three zhuzes in the 18th century?",
+    },
+    options: {
+      ru: ["Тауке хан", "Абылай хан", "Касым хан", "Кенесары хан"],
+      kz: ["Тәуке хан", "Абылай хан", "Қасым хан", "Кенесары хан"],
+      en: ["Tauke Khan", "Abylai Khan", "Kasym Khan", "Kenesary Khan"],
+    },
+    correctIndex: 1,
+    points: 20,
+  },
+  {
+    id: 30,
+    question: {
+      ru: "Какой древний город находился на пути Великого Шёлкового пути в Южном Казахстане?",
+      kz: "Оңтүстік Қазақстанда Ұлы Жібек жолы бойында қай ежелгі қала орналасқан?",
+      en: "Which ancient city was located on the Great Silk Road in Southern Kazakhstan?",
+    },
+    options: {
+      ru: ["Семей", "Испиджаб", "Актобе", "Караганда"],
+      kz: ["Семей", "Испиджаб", "Ақтөбе", "Қарағанды"],
+      en: ["Semey", "Ispidzhab", "Aktobe", "Karaganda"],
+    },
+    correctIndex: 1,
+    points: 25,
+  },
 ];
+
+// Shuffle function
+const shuffleArray = <T,>(array: T[]): T[] => {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
 
 const Quiz = () => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -185,6 +495,7 @@ const Quiz = () => {
   const [gameStarted, setGameStarted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(QUIZ_TIME_SECONDS);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>(allQuizQuestions);
   const { toast } = useToast();
   const { language } = useLanguage();
 
@@ -219,6 +530,7 @@ const Quiz = () => {
   };
 
   const startGame = () => {
+    setQuizQuestions(shuffleArray(allQuizQuestions));
     setGameStarted(true);
     setTimeLeft(QUIZ_TIME_SECONDS);
     setIsTimerRunning(true);
