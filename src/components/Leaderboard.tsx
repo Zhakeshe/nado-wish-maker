@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
-import { Trophy, Medal, Award } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Trophy, Medal, Award, RefreshCw } from "lucide-react";
 import { useLanguage, Language } from "@/contexts/LanguageContext";
 
 interface LeaderboardUser {
@@ -10,10 +11,10 @@ interface LeaderboardUser {
   points: number;
 }
 
-const translations: Record<Language, { title: string; points: string; anonymous: string }> = {
-  ru: { title: "Лидерборд", points: "очков", anonymous: "Аноним" },
-  kz: { title: "Лидерборд", points: "ұпай", anonymous: "Аноним" },
-  en: { title: "Leaderboard", points: "points", anonymous: "Anonymous" },
+const translations: Record<Language, { title: string; points: string; anonymous: string; refresh: string }> = {
+  ru: { title: "Лидерборд", points: "очков", anonymous: "Аноним", refresh: "Обновить" },
+  kz: { title: "Лидерборд", points: "ұпай", anonymous: "Аноним", refresh: "Жаңарту" },
+  en: { title: "Leaderboard", points: "points", anonymous: "Anonymous", refresh: "Refresh" },
 };
 
 export const Leaderboard = () => {
@@ -21,23 +22,28 @@ export const Leaderboard = () => {
   const t = translations[language];
   const [users, setUsers] = useState<LeaderboardUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchLeaderboard = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, full_name, points")
+      .order("points", { ascending: false })
+      .limit(10);
+
+    if (!error && data) {
+      setUsers(data);
+    }
+    setLoading(false);
+    setRefreshing(false);
+  }, []);
 
   useEffect(() => {
-    const fetchLeaderboard = async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, full_name, points")
-        .order("points", { ascending: false })
-        .limit(10);
-
-      if (!error && data) {
-        setUsers(data);
-      }
-      setLoading(false);
-    };
-
     fetchLeaderboard();
-  }, []);
+  }, [fetchLeaderboard]);
 
   const getRankIcon = (index: number) => {
     if (index === 0) return <Trophy className="w-5 h-5 text-yellow-500" />;
@@ -67,15 +73,28 @@ export const Leaderboard = () => {
 
   return (
     <Card className="p-6 bg-card border-border shadow-card">
-      <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-foreground">
-        <Trophy className="w-5 h-5 text-primary" />
-        {t.title}
-      </h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-xl font-bold flex items-center gap-2 text-foreground">
+          <Trophy className="w-5 h-5 text-primary" />
+          {t.title}
+        </h3>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => fetchLeaderboard(true)}
+          disabled={refreshing}
+          className="gap-1 text-muted-foreground hover:text-foreground"
+        >
+          <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
+          {t.refresh}
+        </Button>
+      </div>
       <div className="space-y-2">
         {users.map((user, index) => (
           <div
             key={user.id}
-            className={`flex items-center gap-3 p-3 rounded-lg border transition-all hover:scale-[1.02] ${getRankBg(index)}`}
+            className={`flex items-center gap-3 p-3 rounded-lg border transition-all duration-300 hover:scale-[1.02] hover:shadow-md animate-fade-in ${getRankBg(index)}`}
+            style={{ animationDelay: `${index * 50}ms` }}
           >
             <div className="flex-shrink-0">{getRankIcon(index)}</div>
             <div className="flex-1 min-w-0">
