@@ -29,7 +29,7 @@ export const Leaderboard = () => {
     else setLoading(true);
 
     const { data, error } = await supabase
-      .from("profiles")
+      .from("leaderboard_view")
       .select("id, full_name, points")
       .order("points", { ascending: false })
       .limit(10);
