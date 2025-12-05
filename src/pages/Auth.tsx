@@ -133,16 +133,20 @@ const Auth = () => {
       return;
     }
 
+    // Small delay to ensure profile trigger has completed
+    await new Promise(resolve => setTimeout(resolve, 500));
+
     // Use secure RPC function to create verification code server-side
     const { data: codeData, error: codeError } = await supabase.rpc('create_verification_code');
 
     if (codeError) {
       console.error("Verification code creation error:", codeError);
+      // Still navigate to verify-email, user can request new code there
       toast({
-        variant: "destructive",
-        title: "Қате",
-        description: "Верификация коды жасалмады",
+        title: "Тіркелу сәтті!",
+        description: "Verify-email бетінде жаңа код сұраңыз",
       });
+      navigate("/verify-email");
       setIsLoading(false);
       return;
     }
@@ -151,35 +155,46 @@ const Auth = () => {
 
     if (!codeResult.success || !codeResult.code) {
       console.error("Verification code creation failed:", codeResult.error);
+      // Still navigate to verify-email, user can request new code there
       toast({
-        variant: "destructive",
-        title: "Қате",
-        description: codeResult.error || "Верификация коды жасалмады",
+        title: "Тіркелу сәтті!",
+        description: "Verify-email бетінде жаңа код сұраңыз",
       });
+      navigate("/verify-email");
       setIsLoading(false);
       return;
     }
 
-    const { error: emailError } = await supabase.functions.invoke("send-verification-email", {
-      body: { email: email.trim().toLowerCase(), code: codeResult.code },
-    });
+    // Send email with timeout
+    try {
+      const { error: emailError } = await Promise.race([
+        supabase.functions.invoke("send-verification-email", {
+          body: { email: email.trim().toLowerCase(), code: codeResult.code },
+        }),
+        new Promise<{ error: Error }>((_, reject) => 
+          setTimeout(() => reject({ error: new Error('Email жіберу ұзақ болды') }), 15000)
+        )
+      ]);
 
-    setIsLoading(false);
-
-    if (emailError) {
+      if (emailError) {
+        toast({
+          title: "Тіркелу сәтті!",
+          description: "Verify-email бетінде жаңа код сұраңыз",
+        });
+      } else {
+        toast({
+          title: "Тіркелу сәтті!",
+          description: "Верификациялық код поштаңызға жіберілді",
+        });
+      }
+    } catch {
       toast({
-        variant: "destructive",
-        title: "Email жіберілмеді",
-        description: emailError.message,
+        title: "Тіркелу сәтті!",
+        description: "Verify-email бетінде жаңа код сұраңыз",
       });
-      return;
     }
 
-    toast({
-      title: "Тіркелу сәтті!",
-      description: "Верификациялық код поштаңызға жіберілді",
-    });
-
+    setIsLoading(false);
     navigate("/verify-email");
   };
 
