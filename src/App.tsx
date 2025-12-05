@@ -18,6 +18,8 @@ import Profile from "./pages/Profile";
 import Viewer from "./pages/Viewer";
 import Upload3D from "./pages/Upload3D";
 import VerifyEmail from "./pages/VerifyEmail";
+import ResetPassword from "./pages/ResetPassword";
+import Admin from "./pages/Admin";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -35,6 +37,8 @@ const App = () => (
             <Route path="/news" element={<News />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
             
             {/* Protected Routes - Require Email Verification */}
             <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />

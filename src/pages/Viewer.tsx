@@ -4,11 +4,16 @@ import { Viewer3D } from "@/components/Viewer3D";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { MapPin, Calendar, Ruler, Share2 } from "lucide-react";
+import { MapPin, Calendar, Ruler, Share2, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 import backgroundImage from "@/assets/viewer-background.png";
 
 const Viewer = () => {
+  const { toast } = useToast();
+  const [copied, setCopied] = useState(false);
+
   // Mock data - в будущем будет загружаться из базы данных
   const objectData = {
     title: "Мавзолей Айша Бибі",
@@ -159,10 +164,61 @@ const Viewer = () => {
                   <CardTitle>Поделиться</CardTitle>
                   <CardDescription>Расскажите друзьям об этом объекте</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <Button className="w-full" variant="outline">
-                    <Share2 className="w-4 h-4 mr-2" />
-                    Поделиться
+                <CardContent className="space-y-2">
+                  <Button 
+                    className="w-full" 
+                    variant="outline"
+                    onClick={async () => {
+                      const url = window.location.href;
+                      if (navigator.share) {
+                        try {
+                          await navigator.share({
+                            title: objectData.title,
+                            text: objectData.description,
+                            url: url,
+                          });
+                        } catch (err) {
+                          // User cancelled or share failed
+                        }
+                      } else {
+                        await navigator.clipboard.writeText(url);
+                        setCopied(true);
+                        toast({
+                          title: "Сілтеме көшірілді!",
+                          description: "Достарыңызбен бөлісіңіз",
+                        });
+                        setTimeout(() => setCopied(false), 2000);
+                      }
+                    }}
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="w-4 h-4 mr-2" />
+                        Көшірілді!
+                      </>
+                    ) : (
+                      <>
+                        <Share2 className="w-4 h-4 mr-2" />
+                        Поделиться
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    className="w-full"
+                    variant="ghost"
+                    size="sm"
+                    onClick={async () => {
+                      await navigator.clipboard.writeText(window.location.href);
+                      setCopied(true);
+                      toast({
+                        title: "Сілтеме көшірілді!",
+                        description: "Буферге сақталды",
+                      });
+                      setTimeout(() => setCopied(false), 2000);
+                    }}
+                  >
+                    <Copy className="w-4 h-4 mr-2" />
+                    Сілтемені көшіру
                   </Button>
                 </CardContent>
               </Card>
