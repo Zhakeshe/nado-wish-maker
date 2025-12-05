@@ -62,7 +62,7 @@ const Auth = () => {
           .from("profiles")
           .select("is_verified")
           .eq("user_id", data.user.id)
-          .single();
+          .maybeSingle();
 
         if (profile?.is_verified) {
           navigate("/");
@@ -136,8 +136,28 @@ const Auth = () => {
     // Small delay to ensure profile trigger has completed
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    // Use secure RPC function to create verification code server-side
-    const { data: codeData, error: codeError } = await supabase.rpc('create_verification_code');
+    const profilePayload = {
+      user_id: authData.user.id,
+      full_name: fullName,
+      verification_code: verificationCode,
+      code_expires_at: expiresAt.toISOString(),
+      last_resend_at: new Date().toISOString(),
+      is_verified: false,
+    };
+
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .upsert(profilePayload, { onConflict: "user_id" });
+
+    if (profileError) {
+      toast({
+        variant: "destructive",
+        title: "Профиль жаңартылмады",
+        description: profileError.message,
+      });
+      setIsLoading(false);
+      return;
+    }
 
     if (codeError) {
       console.error("Verification code creation error:", codeError);
@@ -254,7 +274,51 @@ const Auth = () => {
       .eq("user_id", authData.user.id)
       .maybeSingle();
 
-    setIsLoading(false);
+    if (!profile) {
+      const newCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+      const { error: profileCreateError } = await supabase
+        .from("profiles")
+        .upsert({
+          user_id: authData.user.id,
+          full_name: (authData.user.user_metadata as { full_name?: string })?.full_name ?? null,
+          verification_code: newCode,
+          code_expires_at: expiresAt.toISOString(),
+          last_resend_at: new Date().toISOString(),
+          is_verified: false,
+        }, { onConflict: "user_id" });
+
+      if (profileCreateError) {
+        toast({
+          variant: "destructive",
+          title: "Профиль табылмады",
+          description: profileCreateError.message,
+        });
+        return;
+      }
+
+      const { error: emailError } = await supabase.functions.invoke("send-verification-email", {
+        body: { email, code: newCode },
+      });
+
+      if (emailError) {
+        toast({
+          variant: "destructive",
+          title: "Email жіберілмеді",
+          description: emailError.message,
+        });
+        return;
+      }
+
+      toast({
+        title: "Профиль қалпына келтірілді",
+        description: "Жаңа верификациялық код жіберілді",
+      });
+
+      navigate("/verify-email");
+      return;
+    }
 
     if (profile?.is_verified) {
       toast({ title: "Кіру сәтті!" });

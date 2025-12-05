@@ -37,68 +37,13 @@ function checkRateLimit(clientIP: string): boolean {
   return true;
 }
 
-const buildHtmlBody = (code: string): string => {
-  return `<!DOCTYPE html>
-<html lang="ru">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <title>Код подтверждения - MuseoNet</title>
-  </head>
-  <body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, Helvetica, sans-serif;">
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f4f4f4;">
-      <tr>
-        <td align="center" style="padding: 40px 20px;">
-          <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-            <tr>
-              <td style="padding: 40px 40px 20px 40px; text-align: center;">
-                <h1 style="margin: 0; color: #333333; font-size: 24px; font-weight: 600;">MuseoNet</h1>
-                <p style="margin: 10px 0 0 0; color: #666666; font-size: 14px;">Интерактивный музей архитектуры Казахстана</p>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding: 20px 40px;">
-                <hr style="border: none; border-top: 1px solid #eeeeee; margin: 0;" />
-              </td>
-            </tr>
-            <tr>
-              <td style="padding: 20px 40px; text-align: center;">
-                <h2 style="margin: 0 0 20px 0; color: #333333; font-size: 20px; font-weight: 500;">Ваш код подтверждения</h2>
-                <p style="margin: 0 0 20px 0; color: #555555; font-size: 16px; line-height: 1.5;">
-                  Используйте код ниже для подтверждения вашего email адреса:
-                </p>
-                <div style="background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; margin: 20px 0;">
-                  <span style="font-size: 32px; font-family: 'Courier New', monospace; letter-spacing: 8px; color: #333333; font-weight: bold;">${code}</span>
-                </div>
-                <p style="margin: 20px 0 0 0; color: #888888; font-size: 14px;">
-                  Код действителен в течение 5 минут.
-                </p>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding: 20px 40px;">
-                <hr style="border: none; border-top: 1px solid #eeeeee; margin: 0;" />
-              </td>
-            </tr>
-            <tr>
-              <td style="padding: 20px 40px 40px 40px; text-align: center;">
-                <p style="margin: 0; color: #999999; font-size: 12px; line-height: 1.5;">
-                  Если вы не запрашивали этот код, просто проигнорируйте это письмо.
-                  <br />
-                  Это автоматическое сообщение, пожалуйста, не отвечайте на него.
-                </p>
-                <p style="margin: 20px 0 0 0; color: #bbbbbb; font-size: 11px;">
-                  © 2024 MuseoNet / TENGIR. Актау, Казахстан
-                </p>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-  </body>
-</html>`;
+const buildPlainTextBody = (code: string): string => {
+  return [
+    "MuseoNet",
+    "Код входа:",
+    `${code}`,
+    "Действует 5 минут. Если код не запрашивали — просто игнорируйте это письмо.",
+  ].join("\n");
 };
 
 serve(async (req: Request): Promise<Response> => {
@@ -148,15 +93,17 @@ serve(async (req: Request): Promise<Response> => {
 
     const { email, code } = validationResult.data;
 
-    console.log(`[Resend] Sending verification code to ${email} from IP: ${clientIP}`);
+    const plainText = buildPlainTextBody(code);
 
-    const htmlBody = buildHtmlBody(code);
-
-    const { data, error } = await resend.emails.send({
-      from: "MuseoNet <no-reply@museonet.world>",
-      to: [email],
-      subject: "Код подтверждения MuseoNet",
-      html: htmlBody,
+    await client.send({
+      from: `MuseoNet <${SMTP_FROM_EMAIL!}>`,
+      to: email,
+      subject: "Код входа",
+      content: plainText,
+      html: undefined,
+      headers: {
+        "X-Entity-Type": "Transactional",
+      },
     });
 
     if (error) {
