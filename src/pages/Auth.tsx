@@ -37,7 +37,7 @@ const Auth = () => {
 
   const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
-  // SIGNIN - simple and fast
+  // SIGNIN - optimized for speed
   const handleSignin = async () => {
     if (!isValidEmail(email)) {
       toast({ variant: "destructive", title: "Email форматы дұрыс емес" });
@@ -49,31 +49,49 @@ const Auth = () => {
     }
 
     setIsLoading(true);
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     
-    if (error) {
-      setIsLoading(false);
-      toast({ 
-        variant: "destructive", 
-        title: error.message.includes("Invalid login") ? "Email немесе пароль қате" : error.message 
-      });
-      return;
-    }
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      
+      if (error) {
+        setIsLoading(false);
+        toast({ 
+          variant: "destructive", 
+          title: error.message.includes("Invalid login") ? "Email немесе пароль қате" : error.message 
+        });
+        return;
+      }
 
-    // Check verification status
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("is_verified")
-      .eq("user_id", data.user!.id)
-      .maybeSingle();
-
-    setIsLoading(false);
-    
-    if (profile?.is_verified) {
+      // Quick redirect - check verification in background
       toast({ title: "Кіру сәтті!" });
-      navigate("/");
-    } else {
-      navigate("/verify-email");
+      setIsLoading(false);
+      
+      // Check verification with timeout
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('timeout')), 3000)
+      );
+      
+      try {
+        const profilePromise = supabase
+          .from("profiles")
+          .select("is_verified")
+          .eq("user_id", data.user!.id)
+          .maybeSingle();
+        
+        const { data: profile } = await Promise.race([profilePromise, timeoutPromise]) as any;
+        
+        if (profile?.is_verified) {
+          navigate("/");
+        } else {
+          navigate("/verify-email");
+        }
+      } catch {
+        // Timeout or error - just go to home, ProtectedRoute will handle
+        navigate("/");
+      }
+    } catch (err) {
+      setIsLoading(false);
+      toast({ variant: "destructive", title: "Қате орын алды" });
     }
   };
 
