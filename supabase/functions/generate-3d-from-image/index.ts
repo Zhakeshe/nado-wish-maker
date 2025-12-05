@@ -88,37 +88,91 @@ serve(async (req) => {
         throw new Error('taskId is required');
       }
 
-      // Check task status from database
-      const { data: task, error: taskError } = await supabase
+      // First check database for cached result
+      const { data: task } = await supabase
         .from('generation_tasks')
         .select('*')
         .eq('task_id', taskId)
         .maybeSingle();
 
-      if (taskError || !task) {
-        // If not in DB, check API directly
-        console.log('Task not in DB, returning pending status');
+      // If task is completed in DB, return it
+      if (task && (task.status === 'SUCCEEDED' || task.status === 'FAILED')) {
+        const result: any = {
+          status: task.status,
+          progress: task.status === 'SUCCEEDED' ? 100 : 0,
+        };
+
+        if (task.status === 'SUCCEEDED' && task.model_url) {
+          result.model_urls = { glb: task.model_url };
+        }
+
+        if (task.status === 'FAILED') {
+          result.error = task.error_message || 'Generation failed';
+        }
+
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Poll Artificial Studio API directly for real-time status
+      console.log('Polling Artificial Studio API for task:', taskId);
+      
+      const statusResponse = await fetch(`https://api.artificialstudio.ai/api/tasks/${taskId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': API_KEY,
+        },
+      });
+
+      if (!statusResponse.ok) {
+        console.error('Status API error:', statusResponse.status);
         return new Response(JSON.stringify({
           status: 'IN_PROGRESS',
-          progress: 50
+          progress: 30
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
 
-      const result: any = {
-        status: task.status,
-        progress: task.status === 'SUCCEEDED' ? 100 : task.status === 'FAILED' ? 0 : 50,
-      };
+      const statusData = await statusResponse.json();
+      console.log('API status response:', statusData);
 
-      if (task.status === 'SUCCEEDED' && task.model_url) {
-        result.model_urls = {
-          glb: task.model_url,
-        };
+      // Map Artificial Studio status to our status
+      let status = 'IN_PROGRESS';
+      let progress = 50;
+      let modelUrl = null;
+
+      if (statusData.status === 'completed' || statusData.status === 'succeeded') {
+        status = 'SUCCEEDED';
+        progress = 100;
+        modelUrl = statusData.output?.model_url || statusData.output?.glb || statusData.result;
+        
+        // Update database with completed status
+        if (modelUrl) {
+          await supabase
+            .from('generation_tasks')
+            .update({ status: 'SUCCEEDED', model_url: modelUrl })
+            .eq('task_id', taskId);
+        }
+      } else if (statusData.status === 'failed' || statusData.status === 'error') {
+        status = 'FAILED';
+        progress = 0;
+        
+        await supabase
+          .from('generation_tasks')
+          .update({ status: 'FAILED', error_message: statusData.error || 'Unknown error' })
+          .eq('task_id', taskId);
+      } else if (statusData.status === 'processing' || statusData.status === 'running') {
+        progress = statusData.progress || 50;
+      } else if (statusData.status === 'queued' || statusData.status === 'pending') {
+        progress = 20;
       }
 
-      if (task.status === 'FAILED') {
-        result.error = task.error_message || 'Generation failed';
+      const result: any = { status, progress };
+      
+      if (modelUrl) {
+        result.model_urls = { glb: modelUrl };
       }
 
       return new Response(JSON.stringify(result), {

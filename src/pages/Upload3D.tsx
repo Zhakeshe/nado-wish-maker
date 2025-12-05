@@ -517,14 +517,20 @@ const Upload3D = () => {
                 </div>
 
                 {generating && (
-                  <div className="space-y-3 bg-muted/50 rounded-xl p-4">
+                  <div className="space-y-3 bg-muted/50 rounded-xl p-4 border border-primary/20">
                     <div className="flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                      <Label>3D модель жасалуда...</Label>
+                      <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                      <Label className="text-base font-medium">
+                        {generationProgress < 20 && "Суретті жүктеуде..."}
+                        {generationProgress >= 20 && generationProgress < 40 && "AI сервисіне жіберілуде..."}
+                        {generationProgress >= 40 && generationProgress < 70 && "3D модель жасалуда..."}
+                        {generationProgress >= 70 && generationProgress < 95 && "Аяқталу алдында..."}
+                        {generationProgress >= 95 && "Сақталуда..."}
+                      </Label>
                     </div>
                     <Progress value={generationProgress} className="w-full h-3" />
                     <p className="text-sm text-center text-muted-foreground">
-                      {generationProgress}% — Бұл бірнеше минут алуы мүмкін
+                      {generationProgress}% — AI фонда жұмыс істеуде, 2-5 минут күтіңіз
                     </p>
                   </div>
                 )}
