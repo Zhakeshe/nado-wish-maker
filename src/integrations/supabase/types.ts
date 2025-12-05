@@ -152,7 +152,6 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
-          code_expires_at: string | null
           created_at: string
           full_name: string | null
           id: string
@@ -161,11 +160,9 @@ export type Database = {
           points: number
           updated_at: string
           user_id: string
-          verification_code: string | null
         }
         Insert: {
           avatar_url?: string | null
-          code_expires_at?: string | null
           created_at?: string
           full_name?: string | null
           id?: string
@@ -174,11 +171,9 @@ export type Database = {
           points?: number
           updated_at?: string
           user_id: string
-          verification_code?: string | null
         }
         Update: {
           avatar_url?: string | null
-          code_expires_at?: string | null
           created_at?: string
           full_name?: string | null
           id?: string
@@ -187,7 +182,6 @@ export type Database = {
           points?: number
           updated_at?: string
           user_id?: string
-          verification_code?: string | null
         }
         Relationships: []
       }
