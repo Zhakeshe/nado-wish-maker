@@ -1,20 +1,40 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
+import { Resend } from "https://esm.sh/resend@2.0.0";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
-const SMTP_HOST = Deno.env.get("SMTP_HOST");
-const SMTP_PORT = parseInt(Deno.env.get("SMTP_PORT") || "465");
-const SMTP_USERNAME = Deno.env.get("SMTP_USERNAME");
-const SMTP_PASSWORD = Deno.env.get("SMTP_PASSWORD");
-const SMTP_FROM_EMAIL = Deno.env.get("SMTP_FROM_EMAIL");
+const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface VerificationPayload {
-  email: string;
-  code: string;
+// Input validation schema
+const verificationSchema = z.object({
+  email: z.string().email("Invalid email format").max(255, "Email too long"),
+  code: z.string().length(6, "Code must be 6 digits").regex(/^\d+$/, "Code must be numeric"),
+});
+
+// Simple in-memory rate limiting (resets on function cold start)
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = 5; // 5 requests per minute per IP
+
+function checkRateLimit(clientIP: string): boolean {
+  const now = Date.now();
+  const record = rateLimitMap.get(clientIP);
+
+  if (!record || now > record.resetTime) {
+    rateLimitMap.set(clientIP, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+
+  if (record.count >= RATE_LIMIT_MAX_REQUESTS) {
+    return false;
+  }
+
+  record.count++;
+  return true;
 }
 
 const buildPlainTextBody = (code: string): string => {
@@ -39,29 +59,39 @@ serve(async (req: Request): Promise<Response> => {
       });
     }
 
-    const { email, code } = (await req.json()) as VerificationPayload;
+    // Rate limiting check
+    const clientIP =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "unknown";
 
-    if (!email || !code) {
-      return new Response(JSON.stringify({ error: "Missing email or code" }), {
+    if (!checkRateLimit(clientIP)) {
+      console.log(`[Resend] Rate limit exceeded for IP: ${clientIP}`);
+      return new Response(JSON.stringify({ error: "Too many requests. Please try again later." }), {
+        status: 429,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    // Parse and validate input
+    let rawBody: unknown;
+    try {
+      rawBody = await req.json();
+    } catch {
+      return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
         status: 400,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
-    console.log(`[SMTP] Sending verification code to ${email}`);
-    console.log(`[SMTP] Using host: ${SMTP_HOST}, port: ${SMTP_PORT}`);
+    const validationResult = verificationSchema.safeParse(rawBody);
+    if (!validationResult.success) {
+      console.log(`[Resend] Validation failed:`, validationResult.error.errors);
+      return new Response(JSON.stringify({ error: "Invalid input", details: validationResult.error.errors }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
 
-    const client = new SMTPClient({
-      connection: {
-        hostname: SMTP_HOST!,
-        port: SMTP_PORT,
-        tls: true,
-        auth: {
-          username: SMTP_USERNAME!,
-          password: SMTP_PASSWORD!,
-        },
-      },
-    });
+    const { email, code } = validationResult.data;
 
     const plainText = buildPlainTextBody(code);
 
@@ -76,18 +106,24 @@ serve(async (req: Request): Promise<Response> => {
       },
     });
 
-    await client.close();
+    if (error) {
+      console.error("[Resend] Error sending email:", error);
+      return new Response(JSON.stringify({ error: "Failed to send email", details: error.message }), {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
 
-    console.log("[SMTP] Email sent successfully");
+    console.log("[Resend] Email sent successfully:", data);
 
-    return new Response(JSON.stringify({ success: true }), {
+    return new Response(JSON.stringify({ success: true, id: data?.id }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
   } catch (error: any) {
-    console.error("[SMTP] Error in send-verification-email function:", error);
+    console.error("[Resend] Error in send-verification-email function:", error);
 
-    return new Response(JSON.stringify({ error: error?.message ?? String(error) }), {
+    return new Response(JSON.stringify({ error: "Failed to send email" }), {
       status: 500,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });

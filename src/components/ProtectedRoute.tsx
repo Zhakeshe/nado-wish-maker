@@ -11,26 +11,42 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
+  const [initialCheckDone, setInitialCheckDone] = useState(false);
 
   useEffect(() => {
-    checkAuth();
+    let isMounted = true;
+
+    const performInitialCheck = async () => {
+      await checkAuth();
+      if (isMounted) {
+        setInitialCheckDone(true);
+      }
+    };
+
+    performInitialCheck();
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        // Only react to auth changes after initial check is done
+        if (!initialCheckDone) return;
+        
         if (session?.user) {
           await checkVerification(session.user.id);
         } else {
-          setIsAuthenticated(false);
-          setIsVerified(false);
-          setLoading(false);
+          if (isMounted) {
+            setIsAuthenticated(false);
+            setIsVerified(false);
+            setLoading(false);
+          }
         }
       }
     );
 
     return () => {
+      isMounted = false;
       authListener.subscription.unsubscribe();
     };
-  }, []);
+  }, [initialCheckDone]);
 
   const checkAuth = async () => {
     const { data: { user } } = await supabase.auth.getUser();

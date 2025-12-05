@@ -41,6 +41,119 @@ export type Database = {
         }
         Relationships: []
       }
+      forum_posts: {
+        Row: {
+          author_id: string | null
+          content: string
+          created_at: string
+          id: string
+          is_solution: boolean | null
+          topic_id: string
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          is_solution?: boolean | null
+          topic_id: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          is_solution?: boolean | null
+          topic_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forum_posts_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "forum_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forum_topics: {
+        Row: {
+          author_id: string | null
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          is_pinned: boolean | null
+          posts_count: number | null
+          title: string
+          updated_at: string
+          views_count: number | null
+        }
+        Insert: {
+          author_id?: string | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_pinned?: boolean | null
+          posts_count?: number | null
+          title: string
+          updated_at?: string
+          views_count?: number | null
+        }
+        Update: {
+          author_id?: string | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_pinned?: boolean | null
+          posts_count?: number | null
+          title?: string
+          updated_at?: string
+          views_count?: number | null
+        }
+        Relationships: []
+      }
+      generation_tasks: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          image_url: string | null
+          model_url: string | null
+          status: string
+          task_id: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          image_url?: string | null
+          model_url?: string | null
+          status?: string
+          task_id: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          image_url?: string | null
+          model_url?: string | null
+          status?: string
+          task_id?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       objects_3d: {
         Row: {
           author_id: string | null
@@ -116,7 +229,6 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
-          code_expires_at: string | null
           created_at: string
           full_name: string | null
           id: string
@@ -125,11 +237,9 @@ export type Database = {
           points: number
           updated_at: string
           user_id: string
-          verification_code: string | null
         }
         Insert: {
           avatar_url?: string | null
-          code_expires_at?: string | null
           created_at?: string
           full_name?: string | null
           id?: string
@@ -138,11 +248,9 @@ export type Database = {
           points?: number
           updated_at?: string
           user_id: string
-          verification_code?: string | null
         }
         Update: {
           avatar_url?: string | null
-          code_expires_at?: string | null
           created_at?: string
           full_name?: string | null
           id?: string
@@ -151,7 +259,6 @@ export type Database = {
           points?: number
           updated_at?: string
           user_id?: string
-          verification_code?: string | null
         }
         Relationships: []
       }
@@ -205,11 +312,49 @@ export type Database = {
         }
         Relationships: []
       }
+      verification_codes: {
+        Row: {
+          code: string
+          created_at: string
+          expires_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      award_game_points: {
+        Args: { action_type: string; description_text?: string }
+        Returns: Json
+      }
+      create_verification_code: { Args: never; Returns: Json }
+      get_leaderboard: {
+        Args: { limit_count?: number }
+        Returns: {
+          avatar_url: string
+          full_name: string
+          id: string
+          points: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -218,6 +363,7 @@ export type Database = {
         Returns: boolean
       }
       is_user_verified: { Args: { user_id_param: string }; Returns: boolean }
+      verify_email_code: { Args: { code_input: string }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"

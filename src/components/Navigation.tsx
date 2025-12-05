@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Globe, User } from "lucide-react";
+import { Menu, X, Globe, User, Shield } from "lucide-react";
 import { getCurrentUser } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +19,7 @@ interface Translations {
   about: string;
   news: string;
   map: string;
+  forum: string;
   upload3D: string;
   login: string;
 }
@@ -26,30 +28,33 @@ const translations: Record<Language, Translations> = {
   ru: {
     home: "Главная",
     projects: "Проекты",
-    game: "Игра",
+    game: "Игры",
     about: "О нас",
     news: "Новости",
     map: "Карта",
+    forum: "Форум",
     upload3D: "Загрузить 3D",
     login: "Войти",
   },
   kz: {
     home: "Басты бет",
     projects: "Жобалар",
-    game: "Ойын",
+    game: "Ойындар",
     about: "Біз туралы",
     news: "Жаңалықтар",
     map: "Карта",
+    forum: "Форум",
     upload3D: "3D жүктеу",
     login: "Кіру",
   },
   en: {
     home: "Home",
     projects: "Projects",
-    game: "Game",
+    game: "Games",
     about: "About Us",
     news: "News",
     map: "Map",
+    forum: "Forum",
     upload3D: "Upload 3D",
     login: "Login",
   },
@@ -59,14 +64,50 @@ export const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { language, setLanguage } = useLanguage();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     const checkAuth = async () => {
       const user = await getCurrentUser();
       setIsAuthenticated(!!user);
+      
+      if (user) {
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .eq("role", "admin")
+          .maybeSingle();
+        
+        setIsAdmin(!!roleData);
+      } else {
+        setIsAdmin(false);
+      }
     };
+    
     checkAuth();
+    
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session?.user);
+      if (!session?.user) {
+        setIsAdmin(false);
+      } else {
+        // Check admin role after auth change
+        setTimeout(() => {
+          supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", session.user.id)
+            .eq("role", "admin")
+            .maybeSingle()
+            .then(({ data }) => setIsAdmin(!!data));
+        }, 0);
+      }
+    });
+    
+    return () => subscription.unsubscribe();
   }, []);
 
   const t = translations[language];
@@ -106,7 +147,7 @@ export const Navigation = () => {
               {t.projects}
             </Link>
             <Link
-              to="/game"
+              to="/games"
               className="text-foreground hover:text-primary transition-smooth font-medium"
             >
               {t.game}
@@ -128,6 +169,12 @@ export const Navigation = () => {
               className="text-foreground hover:text-primary transition-smooth font-medium"
             >
               {t.map}
+            </Link>
+            <Link
+              to="/forum"
+              className="text-foreground hover:text-primary transition-smooth font-medium"
+            >
+              {t.forum}
             </Link>
             <Link
               to="/upload-3d"
@@ -159,9 +206,16 @@ export const Navigation = () => {
 
             {/* Auth Button */}
             {isAuthenticated ? (
-              <Button variant="ghost" size="icon" onClick={() => navigate("/profile")}>
-                <User className="h-5 w-5" />
-              </Button>
+              <div className="flex items-center gap-1">
+                {isAdmin && (
+                  <Button variant="ghost" size="icon" onClick={() => navigate("/admin")} title="Админ панель">
+                    <Shield className="h-5 w-5 text-yellow-500" />
+                  </Button>
+                )}
+                <Button variant="ghost" size="icon" onClick={() => navigate("/profile")}>
+                  <User className="h-5 w-5" />
+                </Button>
+              </div>
             ) : (
               <Button onClick={() => navigate("/auth")}>
                 {t.login}
@@ -198,7 +252,7 @@ export const Navigation = () => {
               {t.projects}
             </Link>
             <Link
-              to="/game"
+              to="/games"
               className="block text-foreground hover:text-primary transition-smooth font-medium"
               onClick={() => setIsOpen(false)}
             >
@@ -224,6 +278,13 @@ export const Navigation = () => {
               onClick={() => setIsOpen(false)}
             >
               {t.map}
+            </Link>
+            <Link
+              to="/forum"
+              className="block text-foreground hover:text-primary transition-smooth font-medium"
+              onClick={() => setIsOpen(false)}
+            >
+              {t.forum}
             </Link>
             <Link
               to="/upload-3d"
@@ -256,7 +317,13 @@ export const Navigation = () => {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <div className="pt-4 border-t mt-4">
+            <div className="pt-4 border-t mt-4 space-y-2">
+              {isAdmin && (
+                <Button variant="outline" className="w-full" onClick={() => { navigate("/admin"); setIsOpen(false); }}>
+                  <Shield className="h-4 w-4 mr-2 text-yellow-500" />
+                  Админ панель
+                </Button>
+              )}
               {isAuthenticated ? (
                 <Button className="w-full" onClick={() => { navigate("/profile"); setIsOpen(false); }}>
                   <User className="h-4 w-4 mr-2" />

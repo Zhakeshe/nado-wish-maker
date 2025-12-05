@@ -15,8 +15,44 @@ const Auth = () => {
   const [fullName, setFullName] = useState("");
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [isLoading, setIsLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const handleForgotPassword = async () => {
+    if (!isValidEmail(email)) {
+      toast({
+        variant: "destructive",
+        title: "Қате",
+        description: "Email форматы дұрыс емес",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+
+    setIsLoading(false);
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Қате",
+        description: error.message,
+      });
+      return;
+    }
+
+    setResetEmailSent(true);
+    toast({
+      title: "Сілтеме жіберілді!",
+      description: "Поштаңызды тексеріңіз",
+    });
+  };
 
   useEffect(() => {
     const checkUser = async () => {
@@ -38,8 +74,22 @@ const Auth = () => {
     checkUser();
   }, [navigate]);
 
+  const isValidEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email.trim());
+  };
+
   const handleSignup = async () => {
-    if (!email.includes("@") || !fullName.trim() || password.length < 6) {
+    if (!isValidEmail(email)) {
+      toast({
+        variant: "destructive",
+        title: "Қате",
+        description: "Email форматы дұрыс емес (мысалы: name@gmail.com)",
+      });
+      return;
+    }
+    
+    if (!fullName.trim() || password.length < 6) {
       toast({
         variant: "destructive",
         title: "Қате",
@@ -60,10 +110,14 @@ const Auth = () => {
     });
 
     if (authError) {
+      let errorMessage = authError.message;
+      if (authError.message.includes("User already registered")) {
+        errorMessage = "Бұл email тіркелген! \"Кіру\" табын басыңыз.";
+      }
       toast({
         variant: "destructive",
         title: "Тіркелу сәтсіз",
-        description: authError.message,
+        description: errorMessage,
       });
       setIsLoading(false);
       return;
@@ -79,8 +133,8 @@ const Auth = () => {
       return;
     }
 
-    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+    // Small delay to ensure profile trigger has completed
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     const profilePayload = {
       user_id: authData.user.id,
@@ -105,35 +159,80 @@ const Auth = () => {
       return;
     }
 
-    const { error: emailError } = await supabase.functions.invoke("send-verification-email", {
-      body: { email, code: verificationCode },
-    });
-
-    setIsLoading(false);
-
-    if (emailError) {
+    if (codeError) {
+      console.error("Verification code creation error:", codeError);
+      // Still navigate to verify-email, user can request new code there
       toast({
-        variant: "destructive",
-        title: "Email жіберілмеді",
-        description: emailError.message,
+        title: "Тіркелу сәтті!",
+        description: "Verify-email бетінде жаңа код сұраңыз",
       });
+      navigate("/verify-email");
+      setIsLoading(false);
       return;
     }
 
-    toast({
-      title: "Тіркелу сәтті!",
-      description: "Верификациялық код поштаңызға жіберілді",
-    });
+    const codeResult = codeData as { success: boolean; code?: string; error?: string };
 
+    if (!codeResult.success || !codeResult.code) {
+      console.error("Verification code creation failed:", codeResult.error);
+      // Still navigate to verify-email, user can request new code there
+      toast({
+        title: "Тіркелу сәтті!",
+        description: "Verify-email бетінде жаңа код сұраңыз",
+      });
+      navigate("/verify-email");
+      setIsLoading(false);
+      return;
+    }
+
+    // Send email with timeout
+    try {
+      const { error: emailError } = await Promise.race([
+        supabase.functions.invoke("send-verification-email", {
+          body: { email: email.trim().toLowerCase(), code: codeResult.code },
+        }),
+        new Promise<{ error: Error }>((_, reject) => 
+          setTimeout(() => reject({ error: new Error('Email жіберу ұзақ болды') }), 15000)
+        )
+      ]);
+
+      if (emailError) {
+        toast({
+          title: "Тіркелу сәтті!",
+          description: "Verify-email бетінде жаңа код сұраңыз",
+        });
+      } else {
+        toast({
+          title: "Тіркелу сәтті!",
+          description: "Верификациялық код поштаңызға жіберілді",
+        });
+      }
+    } catch {
+      toast({
+        title: "Тіркелу сәтті!",
+        description: "Verify-email бетінде жаңа код сұраңыз",
+      });
+    }
+
+    setIsLoading(false);
     navigate("/verify-email");
   };
 
   const handleSignin = async () => {
-    if (!email.includes("@") || password.length < 6) {
+    if (!isValidEmail(email)) {
       toast({
         variant: "destructive",
         title: "Қате",
-        description: "Email және пароль енгізіңіз",
+        description: "Email форматы дұрыс емес",
+      });
+      return;
+    }
+    
+    if (password.length < 6) {
+      toast({
+        variant: "destructive",
+        title: "Қате",
+        description: "Пароль ең кем 6 таңба болуы керек",
       });
       return;
     }
@@ -145,18 +244,22 @@ const Auth = () => {
       password,
     });
 
-    setIsLoading(false);
-
     if (authError) {
+      setIsLoading(false);
+      let errorMessage = authError.message;
+      if (authError.message.includes("Invalid login credentials")) {
+        errorMessage = "Email немесе құпия сөз қате.";
+      }
       toast({
         variant: "destructive",
         title: "Кіру сәтсіз",
-        description: authError.message,
+        description: errorMessage,
       });
       return;
     }
 
     if (!authData.user) {
+      setIsLoading(false);
       toast({
         variant: "destructive",
         title: "Қате",
@@ -218,19 +321,74 @@ const Auth = () => {
     }
 
     if (profile?.is_verified) {
-      toast({
-        title: "Кіру сәтті!",
-        description: "Жүйеге кірдіңіз",
-      });
+      toast({ title: "Кіру сәтті!" });
       navigate("/");
     } else {
-      toast({
-        title: "Email расталмаған",
-        description: "Алдымен email растау керек",
-      });
+      toast({ title: "Email растау керек" });
       navigate("/verify-email");
     }
   };
+
+  // Forgot password modal
+  if (showForgotPassword) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center p-4 relative"
+        style={{
+          backgroundImage: `url(${backgroundImage})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      >
+        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
+        <Card className="w-full max-w-md relative z-10 bg-card/95 backdrop-blur border border-primary/20 shadow-elegant">
+          <CardHeader className="text-center space-y-2">
+            <CardTitle className="text-2xl font-bold">
+              {resetEmailSent ? "Сілтеме жіберілді!" : "Құпия сөзді қалпына келтіру"}
+            </CardTitle>
+            <CardDescription>
+              {resetEmailSent 
+                ? "Поштаңыздағы сілтемеге өтіңіз" 
+                : "Email енгізіңіз, сілтеме жібереміз"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {!resetEmailSent && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="reset-email">Email</Label>
+                  <Input
+                    id="reset-email"
+                    type="email"
+                    placeholder="name@mydomain.kz"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+                <Button 
+                  onClick={handleForgotPassword} 
+                  className="w-full" 
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Жүктеу..." : "Сілтеме жіберу"}
+                </Button>
+              </>
+            )}
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                setShowForgotPassword(false);
+                setResetEmailSent(false);
+              }}
+            >
+              Кіру бетіне оралу
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -283,6 +441,14 @@ const Auth = () => {
               </div>
               <Button type="button" className="w-full" onClick={handleSignin} disabled={isLoading}>
                 {isLoading ? "Жүктеу..." : "Кіру"}
+              </Button>
+              <Button
+                type="button"
+                variant="link"
+                className="w-full text-sm"
+                onClick={() => setShowForgotPassword(true)}
+              >
+                Құпия сөзді ұмыттыңыз ба?
               </Button>
               <p className="text-xs text-muted-foreground text-center">
                 Email расталмаған болса, верификация бетіне өтесіз
