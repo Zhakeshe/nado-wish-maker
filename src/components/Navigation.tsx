@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Globe, User } from "lucide-react";
+import { Menu, X, Globe, User, Shield } from "lucide-react";
 import { getCurrentUser } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -59,12 +60,24 @@ export const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { language, setLanguage } = useLanguage();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     const checkAuth = async () => {
       const user = await getCurrentUser();
       setIsAuthenticated(!!user);
+      
+      if (user) {
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .eq("role", "admin")
+          .single();
+        
+        setIsAdmin(!!roleData);
+      }
     };
     checkAuth();
   }, []);
@@ -159,9 +172,16 @@ export const Navigation = () => {
 
             {/* Auth Button */}
             {isAuthenticated ? (
-              <Button variant="ghost" size="icon" onClick={() => navigate("/profile")}>
-                <User className="h-5 w-5" />
-              </Button>
+              <div className="flex items-center gap-1">
+                {isAdmin && (
+                  <Button variant="ghost" size="icon" onClick={() => navigate("/admin")} title="Админ панель">
+                    <Shield className="h-5 w-5 text-yellow-500" />
+                  </Button>
+                )}
+                <Button variant="ghost" size="icon" onClick={() => navigate("/profile")}>
+                  <User className="h-5 w-5" />
+                </Button>
+              </div>
             ) : (
               <Button onClick={() => navigate("/auth")}>
                 {t.login}
@@ -256,7 +276,13 @@ export const Navigation = () => {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <div className="pt-4 border-t mt-4">
+            <div className="pt-4 border-t mt-4 space-y-2">
+              {isAdmin && (
+                <Button variant="outline" className="w-full" onClick={() => { navigate("/admin"); setIsOpen(false); }}>
+                  <Shield className="h-4 w-4 mr-2 text-yellow-500" />
+                  Админ панель
+                </Button>
+              )}
               {isAuthenticated ? (
                 <Button className="w-full" onClick={() => { navigate("/profile"); setIsOpen(false); }}>
                   <User className="h-4 w-4 mr-2" />
