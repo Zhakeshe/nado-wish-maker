@@ -34,24 +34,8 @@ const VerifyEmail = () => {
   }, [secondsLeft]);
 
   const checkUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
-
-    setUserEmail(user.email || "");
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("is_verified")
-      .eq("user_id", user.id)
-      .single();
-
-    if (profile?.is_verified) {
-      navigate("/");
-    }
+    // Email verification is disabled - redirect everyone to home
+    navigate("/");
   };
 
   const verifyCode = async () => {
