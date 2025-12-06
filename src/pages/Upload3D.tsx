@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -45,7 +45,7 @@ const Upload3D = () => {
   const [loadingHistory, setLoadingHistory] = useState(true);
 
   // Load generation history on mount
-  useState(() => {
+  useEffect(() => {
     const loadHistory = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
@@ -60,7 +60,7 @@ const Upload3D = () => {
       setLoadingHistory(false);
     };
     loadHistory();
-  });
+  }, []);
 
   const validateFile = (file: File): string | null => {
     const validExtensions = ['.glb', '.obj'];
