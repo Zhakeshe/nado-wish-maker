@@ -4,29 +4,11 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Star, Clock, RotateCcw, Play, History, ArrowDown, Check, X } from "lucide-react";
+import { Trophy, Star, RotateCcw, Play, History, ArrowDown, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
-
-interface HistoricalEvent {
-  id: number;
-  year: number;
-  event: string;
-  eventKz: string;
-  eventEn: string;
-}
-
-const historicalEvents: HistoricalEvent[] = [
-  { id: 1, year: -1000, event: "Эпоха ранних кочевников (саки)", eventKz: "Ерте көшпенділер дәуірі (сақтар)", eventEn: "Early Nomads Era (Saka)" },
-  { id: 2, year: -500, event: "Золотой человек (Иссыкский курган)", eventKz: "Алтын адам (Есік қорғаны)", eventEn: "Golden Man (Issyk Kurgan)" },
-  { id: 3, year: 552, event: "Создание Тюркского каганата", eventKz: "Түрік қағанатының құрылуы", eventEn: "Formation of Turkic Khaganate" },
-  { id: 4, year: 1219, event: "Монгольское нашествие", eventKz: "Моңғол шапқыншылығы", eventEn: "Mongol Invasion" },
-  { id: 5, year: 1465, event: "Образование Казахского ханства", eventKz: "Қазақ хандығының құрылуы", eventEn: "Formation of Kazakh Khanate" },
-  { id: 6, year: 1718, event: "Годы Великого бедствия (Ақтабан шұбырынды)", eventKz: "Ақтабан шұбырынды жылдары", eventEn: "Years of Great Disaster" },
-  { id: 7, year: 1847, event: "Восстание Кенесары Касымова", eventKz: "Кенесары Қасымұлы көтерілісі", eventEn: "Kenesary Kasymov Uprising" },
-  { id: 8, year: 1991, event: "Независимость Казахстана", eventKz: "Қазақстан тәуелсіздігі", eventEn: "Independence of Kazakhstan" },
-];
+import { historicalEvents, type HistoricalEvent } from "@/data/timelineEvents";
 
 const TimelineGame = () => {
   const [currentLevel, setCurrentLevel] = useState(1);
@@ -117,7 +99,8 @@ const TimelineGame = () => {
   };
 
   const initializeLevel = (level: number) => {
-    const eventsCount = Math.min(3 + level, 8);
+    // More events as level increases (3-7 events)
+    const eventsCount = Math.min(3 + level - 1, 7);
     const shuffled = [...historicalEvents]
       .sort(() => Math.random() - 0.5)
       .slice(0, eventsCount);
@@ -176,7 +159,7 @@ const TimelineGame = () => {
   };
 
   const nextLevel = () => {
-    if (currentLevel >= 5) {
+    if (currentLevel >= 10) {
       toast({
         title: t.victory,
       });
@@ -252,7 +235,7 @@ const TimelineGame = () => {
           <div className="container mx-auto px-4">
             <div className="flex flex-wrap items-center justify-center gap-4">
               <Badge className="text-lg px-4 py-2">
-                {t.level}: {currentLevel}/5
+                {t.level}: {currentLevel}/10
               </Badge>
               <Badge variant="outline" className="text-lg px-4 py-2 gap-2">
                 <Star className="w-4 h-4" />
@@ -295,15 +278,17 @@ const TimelineGame = () => {
                     <div key={event.id} className="flex items-center gap-2">
                       <div className="flex-1 p-4 bg-primary/10 rounded-lg border-2 border-primary/30 flex items-center justify-between">
                         <div>
-                          <Badge className="mb-1">{formatYear(event.year)}</Badge>
+                          <Badge className="mb-1">{showResult ? formatYear(event.year) : '?'}</Badge>
                           <p className="font-medium">{getEventText(event)}</p>
                         </div>
-                        <button
-                          onClick={() => removeFromTimeline(event)}
-                          className="p-2 hover:bg-red-100 rounded-full"
-                        >
-                          <X className="w-4 h-4 text-red-500" />
-                        </button>
+                        {!showResult && (
+                          <button
+                            onClick={() => removeFromTimeline(event)}
+                            className="p-2 hover:bg-red-100 rounded-full"
+                          >
+                            <X className="w-4 h-4 text-red-500" />
+                          </button>
+                        )}
                       </div>
                       {index < userOrder.length - 1 && (
                         <ArrowDown className="w-5 h-5 text-muted-foreground" />
@@ -324,6 +309,7 @@ const TimelineGame = () => {
               )}
               {showResult && isCorrect && (
                 <Button onClick={nextLevel} size="lg" className="gap-2">
+                  <Trophy className="w-5 h-5" />
                   {t.next}
                 </Button>
               )}

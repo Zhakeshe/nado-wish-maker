@@ -1,0 +1,58 @@
+export interface HistoricalEvent {
+  id: number;
+  year: number;
+  event: string;
+  eventKz: string;
+  eventEn: string;
+}
+
+export const historicalEvents: HistoricalEvent[] = [
+  { id: 1, year: -1000000, event: "Первые люди на территории Казахстана", eventKz: "Қазақстан аумағындағы алғашқы адамдар", eventEn: "First humans in Kazakhstan territory" },
+  { id: 2, year: -3000, event: "Начало эпохи бронзы (Андроновская культура)", eventKz: "Қола дәуірінің басталуы (Андронов мәдениеті)", eventEn: "Bronze Age begins (Andronovo culture)" },
+  { id: 3, year: -1000, event: "Эпоха ранних кочевников (саки)", eventKz: "Ерте көшпенділер дәуірі (сақтар)", eventEn: "Early Nomads Era (Saka)" },
+  { id: 4, year: -500, event: "Золотой человек (Иссыкский курган)", eventKz: "Алтын адам (Есік қорғаны)", eventEn: "Golden Man (Issyk Kurgan)" },
+  { id: 5, year: -300, event: "Расцвет империи Сака", eventKz: "Сақ империясының гүлденуі", eventEn: "Flourishing of Saka Empire" },
+  { id: 6, year: 45, event: "Образование государства Кангюй", eventKz: "Қаңлы мемлекетінің құрылуы", eventEn: "Formation of Kangju state" },
+  { id: 7, year: 160, event: "Создание Великого Шелкового пути", eventKz: "Ұлы Жібек жолының құрылуы", eventEn: "Creation of the Great Silk Road" },
+  { id: 8, year: 552, event: "Создание Тюркского каганата", eventKz: "Түрік қағанатының құрылуы", eventEn: "Formation of Turkic Khaganate" },
+  { id: 9, year: 603, event: "Распад Тюркского каганата", eventKz: "Түрік қағанатының ыдырауы", eventEn: "Collapse of Turkic Khaganate" },
+  { id: 10, year: 742, event: "Создание Уйгурского каганата", eventKz: "Ұйғыр қағанатының құрылуы", eventEn: "Formation of Uyghur Khaganate" },
+  { id: 11, year: 840, event: "Возникновение Караханидского государства", eventKz: "Қарахан мемлекетінің пайда болуы", eventEn: "Rise of Karakhanid state" },
+  { id: 12, year: 999, event: "Принятие ислама караханидами", eventKz: "Қарахандардың исламды қабылдауы", eventEn: "Karakhanids adopt Islam" },
+  { id: 13, year: 1030, event: "Аль-Фараби - великий ученый", eventKz: "Әл-Фараби - ұлы ғалым", eventEn: "Al-Farabi - the great scholar" },
+  { id: 14, year: 1130, event: "Нашествие каракитаев", eventKz: "Қарақытайлардың шапқыншылығы", eventEn: "Karakitai invasion" },
+  { id: 15, year: 1219, event: "Монгольское нашествие", eventKz: "Моңғол шапқыншылығы", eventEn: "Mongol Invasion" },
+  { id: 16, year: 1227, event: "Смерть Чингисхана", eventKz: "Шыңғысханның қайтыс болуы", eventEn: "Death of Genghis Khan" },
+  { id: 17, year: 1260, event: "Образование Золотой Орды", eventKz: "Алтын Орданың құрылуы", eventEn: "Formation of Golden Horde" },
+  { id: 18, year: 1380, event: "Правление Тимура", eventKz: "Темір билігі", eventEn: "Rule of Timur" },
+  { id: 19, year: 1465, event: "Образование Казахского ханства", eventKz: "Қазақ хандығының құрылуы", eventEn: "Formation of Kazakh Khanate" },
+  { id: 20, year: 1480, event: "Разделение на три жуза", eventKz: "Үш жүзге бөліну", eventEn: "Division into three zhuzes" },
+  { id: 21, year: 1511, event: "Правление хана Касыма", eventKz: "Қасым хан билігі", eventEn: "Reign of Kasym Khan" },
+  { id: 22, year: 1538, event: "Правление хана Хак-Назара", eventKz: "Хақназар хан билігі", eventEn: "Reign of Hak-Nazar Khan" },
+  { id: 23, year: 1598, event: "Правление хана Тауекеля", eventKz: "Тәуекел хан билігі", eventEn: "Reign of Tauekel Khan" },
+  { id: 24, year: 1680, event: "Правление хана Тауке", eventKz: "Тәуке хан билігі", eventEn: "Reign of Tauke Khan" },
+  { id: 25, year: 1718, event: "Годы Великого бедствия (Ақтабан шұбырынды)", eventKz: "Ақтабан шұбырынды жылдары", eventEn: "Years of Great Disaster" },
+  { id: 26, year: 1723, event: "Джунгарское нашествие", eventKz: "Жоңғар шапқыншылығы", eventEn: "Dzungar invasion" },
+  { id: 27, year: 1730, event: "Анракайская битва", eventKz: "Аңырақай шайқасы", eventEn: "Battle of Anrakay" },
+  { id: 28, year: 1731, event: "Принятие подданства России Младшим жузом", eventKz: "Кіші жүздің Ресей бодандығын қабылдауы", eventEn: "Junior zhuz accepts Russian allegiance" },
+  { id: 29, year: 1757, event: "Разгром Джунгарского ханства", eventKz: "Жоңғар хандығының талқандалуы", eventEn: "Defeat of Dzungar Khanate" },
+  { id: 30, year: 1822, event: "Устав о сибирских киргизах", eventKz: "Сібір қырғыздары туралы жарғы", eventEn: "Statute on Siberian Kirghiz" },
+  { id: 31, year: 1847, event: "Восстание Кенесары Касымова", eventKz: "Кенесары Қасымұлы көтерілісі", eventEn: "Kenesary Kasymov Uprising" },
+  { id: 32, year: 1861, event: "Основание Верного (Алматы)", eventKz: "Верный (Алматы) қаласының негізін салу", eventEn: "Founding of Verniy (Almaty)" },
+  { id: 33, year: 1916, event: "Национально-освободительное восстание", eventKz: "Ұлт-азаттық көтеріліс", eventEn: "National liberation uprising" },
+  { id: 34, year: 1920, event: "Образование Киргизской АССР", eventKz: "Қырғыз АКСР-ның құрылуы", eventEn: "Formation of Kirghiz ASSR" },
+  { id: 35, year: 1936, event: "Образование Казахской ССР", eventKz: "Қазақ КСР-ның құрылуы", eventEn: "Formation of Kazakh SSR" },
+  { id: 36, year: 1941, event: "Казахстан в годы ВОВ", eventKz: "Ұлы Отан соғысы жылдарындағы Қазақстан", eventEn: "Kazakhstan in World War II" },
+  { id: 37, year: 1949, event: "Первое ядерное испытание на Семипалатинском полигоне", eventKz: "Семей полигонындағы алғашқы ядролық сынақ", eventEn: "First nuclear test at Semipalatinsk" },
+  { id: 38, year: 1954, event: "Освоение целинных земель", eventKz: "Тың және тыңайған жерлерді игеру", eventEn: "Virgin Lands Campaign" },
+  { id: 39, year: 1961, event: "Полет Юрия Гагарина с Байконура", eventKz: "Юрий Гагариннің Байқоңырдан ұшуы", eventEn: "Yuri Gagarin's flight from Baikonur" },
+  { id: 40, year: 1986, event: "Декабрьские события в Алма-Ате", eventKz: "Алматыдағы желтоқсан оқиғасы", eventEn: "December events in Alma-Ata" },
+  { id: 41, year: 1991, event: "Независимость Казахстана", eventKz: "Қазақстан тәуелсіздігі", eventEn: "Independence of Kazakhstan" },
+  { id: 42, year: 1993, event: "Введение национальной валюты тенге", eventKz: "Ұлттық валюта теңгенің енгізілуі", eventEn: "Introduction of national currency tenge" },
+  { id: 43, year: 1997, event: "Перенос столицы в Астану", eventKz: "Астанаға астананы көшіру", eventEn: "Capital moved to Astana" },
+  { id: 44, year: 1998, event: "Объявление Астаны столицей", eventKz: "Астананы астана деп жариялау", eventEn: "Astana declared as capital" },
+  { id: 45, year: 2010, event: "Председательство Казахстана в ОБСЕ", eventKz: "Қазақстанның ЕҚЫҰ-ға төрағалығы", eventEn: "Kazakhstan's OSCE Chairmanship" },
+  { id: 46, year: 2017, event: "ЭКСПО-2017 в Астане", eventKz: "Астанадағы EXPO-2017", eventEn: "EXPO-2017 in Astana" },
+  { id: 47, year: 2019, event: "Переименование Астаны в Нур-Султан", eventKz: "Астананың Нұр-Сұлтан деп аталуы", eventEn: "Astana renamed to Nur-Sultan" },
+  { id: 48, year: 2022, event: "Возвращение названия Астана", eventKz: "Астана атауының қайтарылуы", eventEn: "Return of Astana name" },
+];

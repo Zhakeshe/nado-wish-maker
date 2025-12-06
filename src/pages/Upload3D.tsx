@@ -11,6 +11,15 @@ import { Upload, ArrowLeft, Camera, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Viewer3D } from "@/components/Viewer3D";
 
+interface GenerationTask {
+  id: string;
+  task_id: string;
+  status: string;
+  image_url: string | null;
+  model_url: string | null;
+  created_at: string;
+}
+
 const Upload3D = () => {
   const navigate = useNavigate();
   
@@ -30,6 +39,28 @@ const Upload3D = () => {
   const [generatedModelUrl, setGeneratedModelUrl] = useState<string>("");
   const [generationTitle, setGenerationTitle] = useState("");
   const [generationDescription, setGenerationDescription] = useState("");
+  
+  // Generation history
+  const [generationHistory, setGenerationHistory] = useState<GenerationTask[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(true);
+
+  // Load generation history on mount
+  useState(() => {
+    const loadHistory = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data } = await supabase
+          .from('generation_tasks')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(10);
+        if (data) setGenerationHistory(data);
+      }
+      setLoadingHistory(false);
+    };
+    loadHistory();
+  });
 
   const validateFile = (file: File): string | null => {
     const validExtensions = ['.glb', '.obj'];
@@ -585,6 +616,40 @@ const Upload3D = () => {
                     >
                       Жеке кабинетке өту
                     </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Generation History */}
+            {generationHistory.length > 0 && (
+              <Card className="mt-6">
+                <CardHeader>
+                  <CardTitle>Бұрын жасалған модельдер</CardTitle>
+                  <CardDescription>Сіздің 3D генерация тарихыңыз</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4">
+                    {generationHistory.map((task) => (
+                      <div key={task.id} className="flex items-center gap-4 p-3 bg-muted/50 rounded-lg">
+                        {task.image_url && (
+                          <img src={task.image_url} alt="Source" className="w-16 h-16 object-cover rounded" />
+                        )}
+                        <div className="flex-1">
+                          <p className="font-medium text-sm">
+                            {new Date(task.created_at).toLocaleDateString()}
+                          </p>
+                          <p className={`text-xs ${task.status === 'SUCCEEDED' ? 'text-green-600' : task.status === 'FAILED' ? 'text-red-600' : 'text-yellow-600'}`}>
+                            {task.status === 'SUCCEEDED' ? 'Сәтті' : task.status === 'FAILED' ? 'Қате' : 'Өңделуде'}
+                          </p>
+                        </div>
+                        {task.model_url && task.status === 'SUCCEEDED' && (
+                          <Button size="sm" variant="outline" onClick={() => window.open(task.model_url!, '_blank')}>
+                            Жүктеу
+                          </Button>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
