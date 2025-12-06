@@ -37,7 +37,7 @@ const Auth = () => {
 
   const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
-  // SIGNIN - optimized for speed
+  // SIGNIN
   const handleSignin = async () => {
     if (!isValidEmail(email)) {
       toast({ variant: "destructive", title: "Email форматы дұрыс емес" });
@@ -62,32 +62,38 @@ const Auth = () => {
         return;
       }
 
-      // Quick redirect - check verification in background
+      // Check if user is banned
+      const { data: banData } = await supabase
+        .from("user_bans")
+        .select("*")
+        .eq("user_id", data.user!.id)
+        .eq("is_active", true)
+        .maybeSingle();
+
+      if (banData) {
+        await supabase.auth.signOut();
+        setIsLoading(false);
+        toast({ 
+          variant: "destructive", 
+          title: "Аккаунт бұғатталған",
+          description: banData.reason || "Админге хабарласыңыз"
+        });
+        return;
+      }
+
       toast({ title: "Кіру сәтті!" });
       setIsLoading(false);
       
-      // Check verification with timeout
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('timeout')), 3000)
-      );
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("is_verified")
+        .eq("user_id", data.user!.id)
+        .maybeSingle();
       
-      try {
-        const profilePromise = supabase
-          .from("profiles")
-          .select("is_verified")
-          .eq("user_id", data.user!.id)
-          .maybeSingle();
-        
-        const { data: profile } = await Promise.race([profilePromise, timeoutPromise]) as any;
-        
-        if (profile?.is_verified) {
-          navigate("/");
-        } else {
-          navigate("/verify-email");
-        }
-      } catch {
-        // Timeout or error - just go to home, ProtectedRoute will handle
+      if (profile?.is_verified) {
         navigate("/");
+      } else {
+        navigate("/verify-email");
       }
     } catch (err) {
       setIsLoading(false);
@@ -95,7 +101,7 @@ const Auth = () => {
     }
   };
 
-  // SIGNUP - simple, email verification handled on verify-email page
+  // SIGNUP - automatically send verification code
   const handleSignup = async () => {
     if (!fullName.trim()) {
       toast({ variant: "destructive", title: "Атыңызды енгізіңіз" });
@@ -111,7 +117,7 @@ const Auth = () => {
     }
 
     setIsLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -120,9 +126,8 @@ const Auth = () => {
       },
     });
 
-    setIsLoading(false);
-
     if (error) {
+      setIsLoading(false);
       toast({ 
         variant: "destructive", 
         title: error.message.includes("already registered") 
@@ -132,7 +137,30 @@ const Auth = () => {
       return;
     }
 
-    toast({ title: "Тіркелу сәтті!", description: "Верификация бетіне өтіңіз" });
+    // Automatically create and send verification code
+    if (data.user) {
+      try {
+        // Create verification code
+        const { data: codeData, error: codeError } = await supabase.rpc('create_verification_code');
+        
+        const result = codeData as { success?: boolean; code?: string } | null;
+        if (!codeError && result?.success && result?.code) {
+          // Send verification email
+          await supabase.functions.invoke("send-verification-email", {
+            body: { email: email.trim().toLowerCase(), code: result.code },
+          });
+          
+          toast({ 
+            title: "Тіркелу сәтті!",
+            description: "Верификация коды поштаңызға жіберілді" 
+          });
+        }
+      } catch (e) {
+        console.error("Error sending verification code:", e);
+      }
+    }
+
+    setIsLoading(false);
     navigate("/verify-email");
   };
 

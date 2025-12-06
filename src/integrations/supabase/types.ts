@@ -154,6 +154,57 @@ export type Database = {
         }
         Relationships: []
       }
+      news_articles: {
+        Row: {
+          author_id: string | null
+          category: string | null
+          content: string
+          content_en: string | null
+          content_kz: string | null
+          created_at: string
+          featured: boolean | null
+          id: string
+          image_url: string | null
+          published: boolean | null
+          title: string
+          title_en: string | null
+          title_kz: string | null
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          category?: string | null
+          content: string
+          content_en?: string | null
+          content_kz?: string | null
+          created_at?: string
+          featured?: boolean | null
+          id?: string
+          image_url?: string | null
+          published?: boolean | null
+          title: string
+          title_en?: string | null
+          title_kz?: string | null
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          category?: string | null
+          content?: string
+          content_en?: string | null
+          content_kz?: string | null
+          created_at?: string
+          featured?: boolean | null
+          id?: string
+          image_url?: string | null
+          published?: boolean | null
+          title?: string
+          title_en?: string | null
+          title_kz?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       objects_3d: {
         Row: {
           author_id: string | null
@@ -262,6 +313,30 @@ export type Database = {
         }
         Relationships: []
       }
+      site_content: {
+        Row: {
+          content: Json
+          id: string
+          page_key: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          content?: Json
+          id?: string
+          page_key: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          content?: Json
+          id?: string
+          page_key?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       user_achievements: {
         Row: {
           achievement_id: string
@@ -290,6 +365,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_bans: {
+        Row: {
+          banned_at: string
+          banned_by: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          banned_at?: string
+          banned_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          banned_at?: string
+          banned_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
