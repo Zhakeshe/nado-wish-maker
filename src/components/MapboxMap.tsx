@@ -117,7 +117,7 @@ const MapboxMap = ({
         markers.forEach((marker) => {
           const [lng, lat] = normalizedToLngLat(marker.x, marker.y);
           
-          // Create custom marker element
+          // Create custom marker element with fixed positioning
           const el = document.createElement('div');
           el.className = 'region-marker';
           el.style.cssText = `
@@ -130,26 +130,38 @@ const MapboxMap = ({
             cursor: pointer;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
             border: 2px solid white;
-            transition: transform 0.2s, box-shadow 0.2s;
             white-space: nowrap;
+            user-select: none;
+            pointer-events: auto;
+            position: relative;
+            z-index: 10;
           `;
           el.textContent = marker.label;
           
-          el.addEventListener('mouseenter', () => {
+          // Store marker reference for click handler
+          const markerData = marker;
+          
+          el.onmouseenter = () => {
             el.style.transform = 'scale(1.1)';
             el.style.boxShadow = '0 6px 20px rgba(227, 62, 100, 0.4)';
-          });
+          };
           
-          el.addEventListener('mouseleave', () => {
+          el.onmouseleave = () => {
             el.style.transform = 'scale(1)';
             el.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
-          });
+          };
           
-          el.addEventListener('click', () => {
-            onMarkerClick(marker);
-          });
+          el.onclick = (e) => {
+            e.stopPropagation();
+            onMarkerClick(markerData);
+          };
           
-          const mapMarker = new mapboxgl.Marker({ element: el })
+          // Create marker with anchor center and no dragging
+          const mapMarker = new mapboxgl.Marker({ 
+            element: el, 
+            anchor: 'center',
+            draggable: false 
+          })
             .setLngLat([lng, lat])
             .addTo(map.current!);
           

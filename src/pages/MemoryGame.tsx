@@ -8,19 +8,9 @@ import { Trophy, Star, Clock, RotateCcw, Play, Layers } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
+import { memoryItems } from "@/data/memoryItems";
 
 const GAME_TIME = 180; // 3 minutes
-
-const memoryItems = [
-  { id: 1, name: "Алтын адам", nameKz: "Алтын адам", nameEn: "Golden Man", emoji: "👑" },
-  { id: 2, name: "Балбал тас", nameKz: "Балбал тас", nameEn: "Balbal Stone", emoji: "🗿" },
-  { id: 3, name: "Юрта", nameKz: "Киіз үй", nameEn: "Yurt", emoji: "⛺" },
-  { id: 4, name: "Домбра", nameKz: "Домбыра", nameEn: "Dombra", emoji: "🎸" },
-  { id: 5, name: "Мавзолей", nameKz: "Кесене", nameEn: "Mausoleum", emoji: "🕌" },
-  { id: 6, name: "Петроглиф", nameKz: "Петроглиф", nameEn: "Petroglyph", emoji: "🪨" },
-  { id: 7, name: "Кинжал", nameKz: "Қанжар", nameEn: "Dagger", emoji: "🗡️" },
-  { id: 8, name: "Керамика", nameKz: "Керамика", nameEn: "Ceramics", emoji: "🏺" },
-];
 
 interface CardType {
   id: number;
@@ -40,6 +30,8 @@ const MemoryGame = () => {
   const [timeLeft, setTimeLeft] = useState(GAME_TIME);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [score, setScore] = useState(0);
+  const [level, setLevel] = useState(1);
+  const [totalPairs, setTotalPairs] = useState(8);
   const { toast } = useToast();
   const { language } = useLanguage();
 
@@ -53,6 +45,7 @@ const MemoryGame = () => {
       pairs: "Пары",
       timeLeft: "Время",
       score: "Очки",
+      level: "Уровень",
       howToPlay: "Как играть:",
       step1: "Нажмите на карточку, чтобы перевернуть",
       step2: "Найдите две одинаковые карточки",
@@ -61,6 +54,7 @@ const MemoryGame = () => {
       gameOver: "Время вышло!",
       victory: "Победа!",
       foundAll: "Вы нашли все пары!",
+      nextLevel: "Следующий уровень",
     },
     kz: {
       title: "Жады ойыны",
@@ -71,6 +65,7 @@ const MemoryGame = () => {
       pairs: "Жұптар",
       timeLeft: "Уақыт",
       score: "Ұпай",
+      level: "Деңгей",
       howToPlay: "Қалай ойнау:",
       step1: "Картаны аудару үшін басыңыз",
       step2: "Екі бірдей картаны табыңыз",
@@ -79,6 +74,7 @@ const MemoryGame = () => {
       gameOver: "Уақыт бітті!",
       victory: "Жеңіс!",
       foundAll: "Сіз барлық жұптарды таптыңыз!",
+      nextLevel: "Келесі деңгей",
     },
     en: {
       title: "Memory Game",
@@ -89,6 +85,7 @@ const MemoryGame = () => {
       pairs: "Pairs",
       timeLeft: "Time",
       score: "Score",
+      level: "Level",
       howToPlay: "How to play:",
       step1: "Click a card to flip it",
       step2: "Find two matching cards",
@@ -97,13 +94,23 @@ const MemoryGame = () => {
       gameOver: "Time's up!",
       victory: "Victory!",
       foundAll: "You found all pairs!",
+      nextLevel: "Next Level",
     },
   };
 
   const t = translations[language];
 
-  const initializeGame = () => {
-    const shuffledItems = [...memoryItems, ...memoryItems]
+  const initializeGame = (newLevel: number = 1) => {
+    // Increase difficulty with level (8-12 pairs)
+    const pairsCount = Math.min(8 + newLevel - 1, 12);
+    setTotalPairs(pairsCount);
+    
+    // Get random items for this game
+    const shuffledItems = [...memoryItems]
+      .sort(() => Math.random() - 0.5)
+      .slice(0, pairsCount);
+    
+    const gameCards = [...shuffledItems, ...shuffledItems]
       .sort(() => Math.random() - 0.5)
       .map((item, index) => ({
         id: index,
@@ -113,12 +120,13 @@ const MemoryGame = () => {
         isFlipped: false,
         isMatched: false,
       }));
-    setCards(shuffledItems);
+    
+    setCards(gameCards);
     setFlippedCards([]);
     setMatchedPairs(0);
     setMoves(0);
-    setScore(0);
     setTimeLeft(GAME_TIME);
+    setLevel(newLevel);
     setGameStarted(true);
     setIsTimerRunning(true);
   };
@@ -141,7 +149,7 @@ const MemoryGame = () => {
   }, [isTimerRunning, timeLeft]);
 
   useEffect(() => {
-    if (matchedPairs === memoryItems.length && gameStarted) {
+    if (matchedPairs === totalPairs && gameStarted && matchedPairs > 0) {
       setIsTimerRunning(false);
       const bonusScore = Math.floor(timeLeft * 0.5);
       const totalScore = score + bonusScore;
@@ -158,15 +166,15 @@ const MemoryGame = () => {
         if (user) {
           await supabase.rpc('award_game_points', {
             action_type: 'memory_game_complete',
-            description_text: `Memory ойынын аяқтады: ${totalScore} ұпай`
+            description_text: `Memory ойынын аяқтады: ${level} деңгей, ${totalScore} ұпай`
           });
         }
       };
       awardPoints();
     }
-  }, [matchedPairs]);
+  }, [matchedPairs, totalPairs]);
 
-  const handleCardClick = (cardId: number) => {
+  const handleCardClick = async (cardId: number) => {
     if (!isTimerRunning) return;
     
     const card = cards.find((c) => c.id === cardId);
@@ -184,7 +192,7 @@ const MemoryGame = () => {
       
       if (firstCard && firstCard.itemId === card.itemId) {
         // Match found
-        setTimeout(() => {
+        setTimeout(async () => {
           setCards((prev) =>
             prev.map((c) =>
               c.itemId === card.itemId ? { ...c, isMatched: true } : c
@@ -193,6 +201,15 @@ const MemoryGame = () => {
           setMatchedPairs((prev) => prev + 1);
           setScore((prev) => prev + 10);
           setFlippedCards([]);
+          
+          // Award points for match
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            await supabase.rpc('award_game_points', {
+              action_type: 'memory_match',
+              description_text: 'Жұп табылды'
+            });
+          }
         }, 500);
       } else {
         // No match
@@ -208,6 +225,10 @@ const MemoryGame = () => {
         }, 1000);
       }
     }
+  };
+
+  const handleNextLevel = () => {
+    initializeGame(level + 1);
   };
 
   const formatTime = (seconds: number) => {
@@ -257,7 +278,7 @@ const MemoryGame = () => {
               <span>{t.timeLeft}: {formatTime(GAME_TIME)}</span>
             </div>
 
-            <Button onClick={initializeGame} size="lg" className="w-full gap-2">
+            <Button onClick={() => initializeGame(1)} size="lg" className="w-full gap-2">
               <Play className="w-5 h-5" />
               {t.startGame}
             </Button>
@@ -268,6 +289,8 @@ const MemoryGame = () => {
     );
   }
 
+  const gameComplete = matchedPairs === totalPairs && matchedPairs > 0;
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-sand">
       <Navigation />
@@ -276,6 +299,9 @@ const MemoryGame = () => {
         <section className="py-4 bg-gradient-archaeology">
           <div className="container mx-auto px-4">
             <div className="flex flex-wrap items-center justify-center gap-4">
+              <Badge className="text-lg px-4 py-2">
+                {t.level}: {level}
+              </Badge>
               <Badge className="text-lg px-4 py-2 gap-2">
                 <Clock className="w-4 h-4" />
                 {formatTime(timeLeft)}
@@ -288,9 +314,9 @@ const MemoryGame = () => {
                 {t.moves}: {moves}
               </Badge>
               <Badge variant="outline" className="text-lg px-4 py-2">
-                {t.pairs}: {matchedPairs}/{memoryItems.length}
+                {t.pairs}: {matchedPairs}/{totalPairs}
               </Badge>
-              <Button variant="outline" size="sm" onClick={initializeGame} className="gap-2">
+              <Button variant="outline" size="sm" onClick={() => initializeGame(1)} className="gap-2">
                 <RotateCcw className="w-4 h-4" />
                 {t.restart}
               </Button>
@@ -301,13 +327,13 @@ const MemoryGame = () => {
         {/* Game Grid */}
         <section className="py-8">
           <div className="container mx-auto px-4">
-            <div className="max-w-2xl mx-auto grid grid-cols-4 gap-3">
+            <div className={`max-w-3xl mx-auto grid gap-3 ${totalPairs <= 8 ? 'grid-cols-4' : totalPairs <= 10 ? 'grid-cols-5' : 'grid-cols-6'}`}>
               {cards.map((card) => (
                 <button
                   key={card.id}
                   onClick={() => handleCardClick(card.id)}
                   disabled={card.isMatched || !isTimerRunning}
-                  className={`aspect-square rounded-xl text-4xl flex items-center justify-center transition-all duration-300 transform ${
+                  className={`aspect-square rounded-xl text-3xl sm:text-4xl flex items-center justify-center transition-all duration-300 transform ${
                     card.isFlipped || card.isMatched
                       ? "bg-primary text-white rotate-0 scale-100"
                       : "bg-muted hover:bg-muted/80 cursor-pointer hover:scale-105"
@@ -317,6 +343,16 @@ const MemoryGame = () => {
                 </button>
               ))}
             </div>
+
+            {/* Next Level Button */}
+            {gameComplete && (
+              <div className="text-center mt-8">
+                <Button onClick={handleNextLevel} size="lg" className="gap-2">
+                  <Trophy className="w-5 h-5" />
+                  {t.nextLevel}
+                </Button>
+              </div>
+            )}
           </div>
         </section>
       </main>
