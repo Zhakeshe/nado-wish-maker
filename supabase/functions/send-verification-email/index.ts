@@ -85,7 +85,7 @@ serve(async (req: Request): Promise<Response> => {
     const { email, code } = validationResult.data;
 
     const { data, error } = await resend.emails.send({
-      from: "MuseoNet <onboarding@resend.dev>",
+      from: "MuseoNet <no-reply@museonet.world>",
       to: [email],
       subject: "Код входа",
       html: `
