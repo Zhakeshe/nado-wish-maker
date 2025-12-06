@@ -13,7 +13,7 @@ serve(async (req) => {
 
   try {
     const { action, imageUrl, taskId } = await req.json();
-    console.log(`3D Generation action: ${action}`, { imageUrl, taskId });
+    console.log(`=== 3D Generation action: ${action} ===`, { imageUrl, taskId });
 
     const API_KEY = Deno.env.get('ARTIFICIAL_STUDIO_API_KEY');
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
@@ -43,32 +43,47 @@ serve(async (req) => {
 
       console.log('Creating 3D generation task with Artificial Studio API...');
       
+      // Webhook URL for receiving completion notification
       const webhookUrl = `${SUPABASE_URL}/functions/v1/3d-webhook`;
+      console.log('Webhook URL:', webhookUrl);
       
+      const requestBody = {
+        model: 'image-to-3d-object',
+        input: {
+          model: 'hunyuan3d-v21',
+          file: imageUrl,
+        },
+        webhook: webhookUrl,
+      };
+      
+      console.log('API Request body:', JSON.stringify(requestBody));
+
       const response = await fetch('https://api.artificialstudio.ai/api/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': API_KEY,
         },
-        body: JSON.stringify({
-          model: 'image-to-3d-object',
-          input: {
-            model: 'hunyuan3d-v21',
-            file: imageUrl,
-          },
-          webhook: webhookUrl,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
+      const responseText = await response.text();
+      console.log('API Response status:', response.status);
+      console.log('API Response body:', responseText);
+
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Artificial Studio API error:', response.status, errorText);
-        throw new Error(`API error: ${response.status} - ${errorText}`);
+        console.error('Artificial Studio API error:', response.status, responseText);
+        throw new Error(`API error: ${response.status} - ${responseText}`);
       }
 
-      const data = await response.json();
-      console.log('Task created:', data);
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        throw new Error(`Invalid JSON response: ${responseText}`);
+      }
+      
+      console.log('Task created successfully:', JSON.stringify(data));
 
       // Store task in database for tracking
       const { error: dbError } = await supabase
@@ -81,7 +96,9 @@ serve(async (req) => {
         });
 
       if (dbError) {
-        console.log('Note: Could not store task in DB:', dbError.message);
+        console.error('DB insert error:', dbError);
+      } else {
+        console.log('Task stored in database');
       }
 
       return new Response(JSON.stringify({
@@ -99,15 +116,24 @@ serve(async (req) => {
         throw new Error('taskId is required');
       }
 
+      console.log('Checking status for task:', taskId);
+
       // First check database for cached result
-      const { data: task } = await supabase
+      const { data: task, error: taskError } = await supabase
         .from('generation_tasks')
         .select('*')
         .eq('task_id', taskId)
         .maybeSingle();
 
+      if (taskError) {
+        console.error('DB query error:', taskError);
+      }
+
+      console.log('Task from DB:', JSON.stringify(task));
+
       // If task is completed in DB, return it
       if (task && (task.status === 'SUCCEEDED' || task.status === 'FAILED')) {
+        console.log('Returning cached result from DB');
         const result: any = {
           status: task.status,
           progress: task.status === 'SUCCEEDED' ? 100 : 0,
@@ -136,6 +162,9 @@ serve(async (req) => {
         },
       });
 
+      const statusText = await statusResponse.text();
+      console.log('Status API response:', statusResponse.status, statusText);
+
       if (!statusResponse.ok) {
         console.error('Status API error:', statusResponse.status);
         return new Response(JSON.stringify({
@@ -146,37 +175,76 @@ serve(async (req) => {
         });
       }
 
-      const statusData = await statusResponse.json();
-      console.log('API status response:', statusData);
+      let statusData;
+      try {
+        statusData = JSON.parse(statusText);
+      } catch (e) {
+        console.error('Failed to parse status response');
+        return new Response(JSON.stringify({
+          status: 'IN_PROGRESS',
+          progress: 40
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      console.log('Parsed status data:', JSON.stringify(statusData));
 
       // Map Artificial Studio status to our status
       let status = 'IN_PROGRESS';
       let progress = 50;
       let modelUrl = null;
 
-      if (statusData.status === 'completed' || statusData.status === 'succeeded') {
+      const apiStatus = (statusData.status || '').toLowerCase();
+      
+      if (apiStatus === 'completed' || apiStatus === 'succeeded' || apiStatus === 'success') {
         status = 'SUCCEEDED';
         progress = 100;
-        modelUrl = statusData.output?.model_url || statusData.output?.glb || statusData.result;
+        
+        // Extract model URL from various possible locations
+        const output = statusData.output;
+        if (output) {
+          if (typeof output === 'string') {
+            modelUrl = output;
+          } else if (typeof output === 'object') {
+            modelUrl = output.url || output.glb || output.model || output.model_url || output.file;
+            if (Array.isArray(output) && output.length > 0) {
+              const first = output[0];
+              modelUrl = typeof first === 'string' ? first : (first.url || first.glb || first.model);
+            }
+          }
+        }
+        // Also check result field
+        if (!modelUrl && statusData.result) {
+          modelUrl = typeof statusData.result === 'string' ? statusData.result : statusData.result.url;
+        }
+        
+        console.log('Model URL extracted:', modelUrl);
         
         // Update database with completed status
         if (modelUrl) {
-          await supabase
+          const { error: updateError } = await supabase
             .from('generation_tasks')
-            .update({ status: 'SUCCEEDED', model_url: modelUrl })
+            .update({ status: 'SUCCEEDED', model_url: modelUrl, updated_at: new Date().toISOString() })
             .eq('task_id', taskId);
+          
+          if (updateError) {
+            console.error('DB update error:', updateError);
+          } else {
+            console.log('Task updated in DB with model URL');
+          }
         }
-      } else if (statusData.status === 'failed' || statusData.status === 'error') {
+      } else if (apiStatus === 'failed' || apiStatus === 'error') {
         status = 'FAILED';
         progress = 0;
         
         await supabase
           .from('generation_tasks')
-          .update({ status: 'FAILED', error_message: statusData.error || 'Unknown error' })
+          .update({ status: 'FAILED', error_message: statusData.error || 'Unknown error', updated_at: new Date().toISOString() })
           .eq('task_id', taskId);
-      } else if (statusData.status === 'processing' || statusData.status === 'running') {
+      } else if (apiStatus === 'processing' || apiStatus === 'running') {
         progress = statusData.progress || 50;
-      } else if (statusData.status === 'queued' || statusData.status === 'pending') {
+      } else if (apiStatus === 'queued' || apiStatus === 'pending') {
         progress = 20;
       }
 
@@ -185,6 +253,8 @@ serve(async (req) => {
       if (modelUrl) {
         result.model_urls = { glb: modelUrl };
       }
+
+      console.log('Returning status result:', JSON.stringify(result));
 
       return new Response(JSON.stringify(result), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

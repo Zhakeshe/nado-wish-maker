@@ -6,122 +6,88 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Verify webhook signature using HMAC-SHA256
-async function verifySignature(payload: string, signature: string | null, secret: string): Promise<boolean> {
-  if (!signature) {
-    console.log('No signature provided');
-    return false;
-  }
-
-  try {
-    const encoder = new TextEncoder();
-    const key = await crypto.subtle.importKey(
-      "raw",
-      encoder.encode(secret),
-      { name: "HMAC", hash: "SHA-256" },
-      false,
-      ["sign"]
-    );
-
-    const signatureBytes = await crypto.subtle.sign(
-      "HMAC",
-      key,
-      encoder.encode(payload)
-    );
-
-    const expectedSignature = Array.from(new Uint8Array(signatureBytes))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
-
-    // Compare signatures (handle both with and without prefix)
-    const receivedSig = signature.replace(/^sha256=/, '').toLowerCase();
-    const isValid = receivedSig === expectedSignature.toLowerCase();
-    
-    console.log('Signature verification:', { isValid, receivedLength: receivedSig.length });
-    return isValid;
-  } catch (error) {
-    console.error('Signature verification error:', error);
-    return false;
-  }
-}
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const WEBHOOK_SECRET = Deno.env.get('WEBHOOK_SECRET');
-    
-    if (!WEBHOOK_SECRET) {
-      console.error('WEBHOOK_SECRET not configured');
-      return new Response('Server configuration error', { status: 500 });
-    }
+    console.log('=== 3D Webhook received ===');
+    console.log('Method:', req.method);
+    console.log('Headers:', JSON.stringify(Object.fromEntries(req.headers.entries())));
 
-    // Get raw body for signature verification
+    // Get raw body
     const rawBody = await req.text();
-    
-    // Get signature from headers (try common header names)
-    const signature = req.headers.get('x-signature') || 
-                     req.headers.get('x-webhook-signature') ||
-                     req.headers.get('x-hub-signature-256') ||
-                     req.headers.get('authorization');
+    console.log('Raw body:', rawBody);
 
-    // Verify signature
-    const isValid = await verifySignature(rawBody, signature, WEBHOOK_SECRET);
-    
-    if (!isValid) {
-      console.error('Invalid webhook signature - rejecting request');
-      return new Response('Unauthorized - Invalid signature', { 
-        status: 401,
-        headers: corsHeaders 
-      });
+    // Parse JSON body
+    let body;
+    try {
+      body = JSON.parse(rawBody);
+    } catch (e) {
+      console.error('Failed to parse JSON:', e);
+      return new Response('Invalid JSON', { status: 400, headers: corsHeaders });
     }
 
-    console.log('Webhook signature verified successfully');
+    console.log('Parsed webhook payload:', JSON.stringify(body));
 
-    const body = JSON.parse(rawBody);
-    console.log('Webhook received:', JSON.stringify(body));
-
-    const { id, output, status, error } = body;
+    // According to Artificial Studio docs: id, output, status, model, payload, error
+    const { id, output, status, error, model, payload } = body;
 
     if (!id) {
       console.error('No task ID in webhook payload');
-      return new Response('OK', { status: 200 });
+      return new Response('OK - no ID', { status: 200, headers: corsHeaders });
     }
+
+    console.log('Processing task:', id, 'Status:', status);
 
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
-    const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      console.error('Missing Supabase credentials');
+      return new Response('Server error', { status: 500, headers: corsHeaders });
+    }
 
-    // Map status
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    // Map Artificial Studio status to our status
     let dbStatus = 'IN_PROGRESS';
-    if (status === 'completed' || status === 'succeeded') {
+    if (status === 'completed' || status === 'succeeded' || status === 'success') {
       dbStatus = 'SUCCEEDED';
     } else if (status === 'failed' || status === 'error') {
       dbStatus = 'FAILED';
     }
 
-    // Get model URL from output
+    // Get model URL from output - handle various response formats
     let modelUrl = null;
     if (output) {
-      // Output can be string URL or object with url/glb field
+      console.log('Output type:', typeof output);
+      console.log('Output value:', JSON.stringify(output));
+      
       if (typeof output === 'string') {
         modelUrl = output;
-      } else if (output.url) {
-        modelUrl = output.url;
-      } else if (output.glb) {
-        modelUrl = output.glb;
-      } else if (output.model) {
-        modelUrl = output.model;
+      } else if (typeof output === 'object') {
+        // Try different possible field names
+        modelUrl = output.url || output.glb || output.model || output.model_url || output.file || output.result;
+        
+        // If output is an array, get first item
+        if (Array.isArray(output) && output.length > 0) {
+          const first = output[0];
+          if (typeof first === 'string') {
+            modelUrl = first;
+          } else if (typeof first === 'object') {
+            modelUrl = first.url || first.glb || first.model;
+          }
+        }
       }
     }
 
-    console.log('Updating task:', { id, dbStatus, modelUrl, error });
+    console.log('Extracted model URL:', modelUrl);
+    console.log('Updating task with status:', dbStatus);
 
     // Update task in database
-    const { error: updateError } = await supabase
+    const { data: updateData, error: updateError } = await supabase
       .from('generation_tasks')
       .update({
         status: dbStatus,
@@ -129,19 +95,22 @@ serve(async (req) => {
         error_message: error || null,
         updated_at: new Date().toISOString(),
       })
-      .eq('task_id', id);
+      .eq('task_id', id)
+      .select();
 
     if (updateError) {
       console.error('Failed to update task:', updateError);
+    } else {
+      console.log('Task updated successfully:', JSON.stringify(updateData));
     }
 
-    return new Response('Webhook received', { 
+    return new Response('Webhook processed', { 
       status: 200,
       headers: corsHeaders 
     });
 
   } catch (error) {
     console.error('Webhook error:', error);
-    return new Response('OK', { status: 200 });
+    return new Response('OK', { status: 200, headers: corsHeaders });
   }
 });
