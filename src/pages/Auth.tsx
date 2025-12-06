@@ -23,14 +23,7 @@ const Auth = () => {
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) {
-        supabase
-          .from("profiles")
-          .select("is_verified")
-          .eq("user_id", data.user.id)
-          .maybeSingle()
-          .then(({ data: profile }) => {
-            navigate(profile?.is_verified ? "/" : "/verify-email");
-          });
+        navigate("/");
       }
     });
   }, [navigate]);
@@ -83,18 +76,7 @@ const Auth = () => {
 
       toast({ title: "Кіру сәтті!" });
       setIsLoading(false);
-      
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("is_verified")
-        .eq("user_id", data.user!.id)
-        .maybeSingle();
-      
-      if (profile?.is_verified) {
-        navigate("/");
-      } else {
-        navigate("/verify-email");
-      }
+      navigate("/");
     } catch (err) {
       setIsLoading(false);
       toast({ variant: "destructive", title: "Қате орын алды" });
@@ -137,31 +119,9 @@ const Auth = () => {
       return;
     }
 
-    // Automatically create and send verification code
-    if (data.user) {
-      try {
-        // Create verification code
-        const { data: codeData, error: codeError } = await supabase.rpc('create_verification_code');
-        
-        const result = codeData as { success?: boolean; code?: string } | null;
-        if (!codeError && result?.success && result?.code) {
-          // Send verification email
-          await supabase.functions.invoke("send-verification-email", {
-            body: { email: email.trim().toLowerCase(), code: result.code },
-          });
-          
-          toast({ 
-            title: "Тіркелу сәтті!",
-            description: "Верификация коды поштаңызға жіберілді" 
-          });
-        }
-      } catch (e) {
-        console.error("Error sending verification code:", e);
-      }
-    }
-
+    toast({ title: "Тіркелу сәтті!" });
     setIsLoading(false);
-    navigate("/verify-email");
+    navigate("/");
   };
 
   // FORGOT PASSWORD
