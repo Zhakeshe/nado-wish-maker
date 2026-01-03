@@ -13,7 +13,7 @@ import MemoryGame from "./pages/MemoryGame";
 import TimelineGame from "./pages/TimelineGame";
 import About from "./pages/About";
 import News from "./pages/News";
-import Map from "./pages/Map";
+import Panoramas from "./pages/Panoramas";
 import Forum from "./pages/Forum";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
@@ -49,7 +49,7 @@ const App = () => (
             <Route path="/quiz" element={<Quiz />} />
             <Route path="/memory" element={<MemoryGame />} />
             <Route path="/timeline" element={<TimelineGame />} />
-            <Route path="/map" element={<Map />} />
+            <Route path="/map" element={<Panoramas />} />
             <Route path="/projects" element={<Projects />} />
             <Route path="/viewer/:id?" element={<Viewer />} />
             
