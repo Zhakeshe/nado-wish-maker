@@ -250,6 +250,45 @@ export type Database = {
         }
         Relationships: []
       }
+      panoramas: {
+        Row: {
+          author_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          location: string | null
+          panorama_url: string
+          status: string
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          location?: string | null
+          panorama_url: string
+          status?: string
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          location?: string | null
+          panorama_url?: string
+          status?: string
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       points_history: {
         Row: {
           action: string

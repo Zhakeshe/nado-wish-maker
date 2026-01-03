@@ -17,7 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { 
   Shield, Users, Box, Search, Trash2, Check, X, RefreshCw, 
-  Newspaper, Plus, Edit, Eye, Mail, Ban, UserCheck, Upload
+  Newspaper, Plus, Edit, Eye, Mail, Ban, UserCheck, Upload, Image
 } from "lucide-react";
 
 interface UserProfile {
@@ -65,6 +65,18 @@ interface NewsArticle {
   featured: boolean | null;
   published: boolean | null;
   image_url: string | null;
+  created_at: string;
+}
+
+interface Panorama {
+  id: string;
+  title: string;
+  description: string | null;
+  panorama_url: string;
+  thumbnail_url: string | null;
+  location: string | null;
+  author_id: string | null;
+  status: string;
   created_at: string;
 }
 
@@ -135,6 +147,12 @@ const translations = {
     newsSaved: "Жаңалық сақталды",
     newsDeleted: "Жаңалық жойылды",
     uploadFile: "Файл жүктеу",
+    panoramas: "Панорамалар",
+    panoramasTitle: "Панорамалар",
+    managePanoramas: "Панорамаларды модерациялау",
+    panoramaLocation: "Орны",
+    panoramaApproved: "Панорама бекітілді",
+    panoramaDeleted: "Панорама жойылды",
   },
   ru: {
     title: "Админ панель",
@@ -198,6 +216,12 @@ const translations = {
     newsSaved: "Новость сохранена",
     newsDeleted: "Новость удалена",
     uploadFile: "Загрузить файл",
+    panoramas: "Панорамы",
+    panoramasTitle: "Панорамы",
+    managePanoramas: "Модерация панорам",
+    panoramaLocation: "Местоположение",
+    panoramaApproved: "Панорама одобрена",
+    panoramaDeleted: "Панорама удалена",
   },
   en: {
     title: "Admin Panel",
@@ -261,6 +285,12 @@ const translations = {
     newsSaved: "News saved",
     newsDeleted: "News deleted",
     uploadFile: "Upload File",
+    panoramas: "Panoramas",
+    panoramasTitle: "Panoramas",
+    managePanoramas: "Moderate panoramas",
+    panoramaLocation: "Location",
+    panoramaApproved: "Panorama approved",
+    panoramaDeleted: "Panorama deleted",
   },
 };
 
@@ -275,8 +305,10 @@ const Admin = () => {
   const [userBans, setUserBans] = useState<UserBan[]>([]);
   const [objects, setObjects] = useState<Object3D[]>([]);
   const [news, setNews] = useState<NewsArticle[]>([]);
+  const [panoramas, setPanoramas] = useState<Panorama[]>([]);
   const [searchUser, setSearchUser] = useState("");
   const [searchObject, setSearchObject] = useState("");
+  const [searchPanorama, setSearchPanorama] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   
   // Edit object dialog state
@@ -399,6 +431,14 @@ const Admin = () => {
       .order("created_at", { ascending: false });
     
     if (newsData) setNews(newsData as NewsArticle[]);
+
+    // Fetch panoramas
+    const { data: panoramasData } = await supabase
+      .from("panoramas")
+      .select("*")
+      .order("created_at", { ascending: false });
+    
+    if (panoramasData) setPanoramas(panoramasData as Panorama[]);
     
     setRefreshing(false);
   };
@@ -770,6 +810,41 @@ const Admin = () => {
     o.region?.toLowerCase().includes(searchObject.toLowerCase())
   );
 
+  const filteredPanoramas = panoramas.filter(p =>
+    p.title.toLowerCase().includes(searchPanorama.toLowerCase()) ||
+    p.location?.toLowerCase().includes(searchPanorama.toLowerCase())
+  );
+
+  const handlePanoramaStatus = async (panoramaId: string, status: string) => {
+    const { error } = await supabase
+      .from("panoramas")
+      .update({ status })
+      .eq("id", panoramaId);
+
+    if (error) {
+      toast({ variant: "destructive", title: t.error, description: error.message });
+      return;
+    }
+
+    toast({ title: t.success, description: t.panoramaApproved });
+    await fetchData();
+  };
+
+  const handleDeletePanorama = async (panoramaId: string) => {
+    const { error } = await supabase
+      .from("panoramas")
+      .delete()
+      .eq("id", panoramaId);
+
+    if (error) {
+      toast({ variant: "destructive", title: t.error, description: error.message });
+      return;
+    }
+
+    toast({ title: t.success, description: t.panoramaDeleted });
+    await fetchData();
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -829,7 +904,7 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="users" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3 max-w-lg">
+          <TabsList className="grid w-full grid-cols-4 max-w-xl">
             <TabsTrigger value="users">
               <Users className="w-4 h-4 mr-2" />
               {t.users}
@@ -837,6 +912,10 @@ const Admin = () => {
             <TabsTrigger value="objects">
               <Box className="w-4 h-4 mr-2" />
               {t.objects}
+            </TabsTrigger>
+            <TabsTrigger value="panoramas">
+              <Image className="w-4 h-4 mr-2" />
+              {t.panoramas}
             </TabsTrigger>
             <TabsTrigger value="news">
               <Newspaper className="w-4 h-4 mr-2" />
@@ -1122,6 +1201,94 @@ const Admin = () => {
                                 size="sm"
                                 variant="ghost"
                                 onClick={() => handleDeleteNews(article.id)}
+                                className="h-8 w-8 p-0"
+                              >
+                                <Trash2 className="w-4 h-4 text-destructive" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Panoramas Tab */}
+          <TabsContent value="panoramas">
+            <Card>
+              <CardHeader>
+                <CardTitle>{t.panoramasTitle}</CardTitle>
+                <CardDescription>{t.managePanoramas}</CardDescription>
+                <div className="relative mt-4">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder={t.search}
+                    value={searchPanorama}
+                    onChange={(e) => setSearchPanorama(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t.objectName}</TableHead>
+                        <TableHead className="hidden md:table-cell">{t.panoramaLocation}</TableHead>
+                        <TableHead>{t.status}</TableHead>
+                        <TableHead>{t.date}</TableHead>
+                        <TableHead>{t.actions}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredPanoramas.map((pano) => (
+                        <TableRow key={pano.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <img 
+                                src={pano.thumbnail_url || pano.panorama_url} 
+                                alt={pano.title}
+                                className="w-12 h-8 object-cover rounded"
+                              />
+                              <p className="font-medium">{pano.title}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell">{pano.location || "-"}</TableCell>
+                          <TableCell>
+                            <Select
+                              value={pano.status}
+                              onValueChange={(value) => handlePanoramaStatus(pano.id, value)}
+                            >
+                              <SelectTrigger className="w-[120px]">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="pending">{t.pending}</SelectItem>
+                                <SelectItem value="approved">{t.yes}</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {new Date(pano.created_at).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                onClick={() => window.open(pano.panorama_url, '_blank')}
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeletePanorama(pano.id)}
                                 className="h-8 w-8 p-0"
                               >
                                 <Trash2 className="w-4 h-4 text-destructive" />
